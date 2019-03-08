@@ -235,12 +235,12 @@ class CliApp(metaclass=MetaCli):
             configs = self._default_configs.copy()
             if os.path.exists(self.cli.config_file):
                 with open(self.cli.config_file, 'r') as f:
-                    configs = yaml.safe_load(f)
+                    configs = yaml.load(f, Loader=yaml.RoundTripLoader)
             else:
                 os.makedirs(os.path.dirname(self.cli.config_file),
                             exist_ok=True)
                 with open(self.cli.config_file, 'w') as f:
-                    yaml.safe_dump(configs, f, indent=2)
+                    yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
             self._configs = configs
             return configs
         return {}
