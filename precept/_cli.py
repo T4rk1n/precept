@@ -54,11 +54,13 @@ class Command:
     arguments: typing.List[Argument]
     description: str
 
-    def __init__(self, *arguments: Argument, name=None, description=None):
+    def __init__(self, *arguments: Argument,
+                 name=None, description=None, help=None):
         self.arguments = arguments
         self._command_name = None
         self.command_name = name
         self.description = description
+        self.help = help
 
     def __call__(self, func):
         self.command_name = getattr(func, '__name__')
@@ -71,6 +73,7 @@ class Command:
         parser = subparsers.add_parser(
             self.command_name,
             description=self.description,
+            help=self.help or self.description,
             formatter_class=CombinedFormatter
         )
 
