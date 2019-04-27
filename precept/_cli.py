@@ -137,10 +137,10 @@ class Cli:
         for c in commands:
             c.__command__.register(subparsers)
 
-    async def run(self):
-        args = self.parser.parse_args()
-        command = self.commands.get(args.command)
-        kw = vars(args).copy()
+    async def run(self, args=None):
+        namespace = self.parser.parse_args(args=args)
+        command = self.commands.get(namespace.command)
+        kw = vars(namespace).copy()
         kw.pop('command')
 
         if self._config_file:
@@ -151,12 +151,12 @@ class Cli:
             self.globals[key] = kw.pop(key)
 
         if callable(self._on_parse):
-            self._on_parse(args)
+            self._on_parse(namespace)
 
         if command:
             await command(**kw)
         elif self.default_command:
-            self.default_command(**vars(args))
+            self.default_command(**vars(namespace))
         else:
             self.parser.print_help()
 
