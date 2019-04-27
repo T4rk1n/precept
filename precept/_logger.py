@@ -47,12 +47,8 @@ _colors = {
             'style': Style.BRIGHT,
         },
     },
-    'created': {
-
-    },
-    'logger_name': {
-
-    }
+    'created': {},
+    'logger_name': {}
 }
 
 
@@ -103,4 +99,3 @@ def setup_logger(logger_name,
     logger.propagate = False
 
     return logger
-

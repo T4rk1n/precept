@@ -1,7 +1,7 @@
 import asyncio
 import sys
 
-from colorama import Style, Fore, Back
+from colorama import Style, Fore
 
 __all__ = [
     'colorize',
