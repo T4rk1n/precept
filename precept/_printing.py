@@ -1,7 +1,7 @@
 import asyncio
 import sys
 
-from colorama import Style, Fore, Back
+from colorama import Style, Fore
 
 __all__ = [
     'colorize',
@@ -18,7 +18,7 @@ def colorize(text, bg=None, fg=None, style=None):
 
 async def spinner(condition,
                   sleep_time=0.25, message='',
-                  fg=Fore.WHITE, bg=Back.BLACK):
+                  fg=Fore.WHITE, bg=None):
     i = 0
     while not condition():
         m = i % 8
