@@ -287,7 +287,9 @@ class CliApp(metaclass=MetaCli):
         self.executor = AsyncExecutor(loop, executor)
 
         common_g_arguments = [
-            Argument(['-v', '--verbose'], {'action': 'store_true', 'default': False}),
+            Argument(['-v', '--verbose'], {
+                'action': 'store_true', 'default': False
+            }),
             Argument(['--log-file'], {'type': argparse.FileType('w')})
         ]
 
