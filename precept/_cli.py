@@ -12,6 +12,7 @@ import colorama
 import stringcase
 from ruamel import yaml
 
+from ._immutable import ImmutableDict
 from ._tools import is_windows
 from ._logger import setup_logger
 
@@ -62,16 +63,36 @@ def _flags_key(flags):
     return stringcase.snakecase(flags[-1].lstrip('-'))
 
 
-class Argument(typing.NamedTuple):
+class Argument(ImmutableDict):
     """
     Argument of a Command, can either be optional or not depending on the flags
-
-    kwargs is a dict to give to `parser.add_argument`
-
-    Placeholder class, expected to change later.
     """
-    flags: typing.List[str]
-    kwargs: dict
+    def __init__(
+            self,
+            *flags: str,
+            type=None,
+            help: str = None,
+            choices: typing.Iterable = None,
+            default: typing.Any = None,
+            nargs: typing.Union[str, int] = None,
+            action: str = None,
+            required: bool = None,
+            metavar: str = None,
+            dest: str = None,
+    ):
+        super().__init__(**{
+            k: v for k, v in locals().items()
+            if k in self._prop_keys and v is not None
+        })
+
+    def register(self, parser):
+        options = {k: v for k, v in self.items() if k != 'flags'}
+
+        if 'default' in options and 'help' not in options:
+            # Otherwise the default value don't show up.
+            options['help'] = '-'
+
+        parser.add_argument(*self.flags, **options)
 
 
 class CombinedFormatter(argparse.ArgumentDefaultsHelpFormatter,
@@ -86,7 +107,7 @@ class Command:
 
     Wrapped methods will gets the arguments by the ``Argument`` flag.
     """
-    arguments: typing.List[Argument]
+    arguments: typing.Iterable[Argument]
     description: str
 
     def __init__(self, *arguments: Argument,
@@ -113,11 +134,7 @@ class Command:
         )
 
         for arg in self.arguments:
-            kw = dict(help='-', **arg.kwargs) \
-                if 'default' in arg.kwargs and 'help' not in arg.kwargs \
-                else arg.kwargs
-
-            parser.add_argument(*arg.flags, **kw)
+            arg.register(parser)
 
     @property
     def command_name(self):
@@ -158,9 +175,7 @@ class Cli:
         self._on_parse = on_parse
 
         for g in self._global_arguments:
-            self.parser.add_argument(
-                *g.flags, **g.kwargs
-            )
+            g.register(self.parser)
 
         self.commands = {
             x.__command__.command_name: x for x in commands
@@ -287,20 +302,19 @@ class CliApp(metaclass=MetaCli):
         self.executor = AsyncExecutor(loop, executor)
 
         common_g_arguments = [
-            Argument(['-v', '--verbose'], {
-                'action': 'store_true', 'default': False
-            }),
-            Argument(['--log-file'], {'type': argparse.FileType('w')})
+            Argument('-v', '--verbose', action='store_true', default=False),
+            Argument('--log-file', type=argparse.FileType('w'))
         ]
 
         commands = [getattr(self, x) for x in self._commands]
 
         if add_dump_config_command:
             command = Command(
-                Argument(['outfile'], {
-                    'help': 'Write the current configs to this file.',
-                    'type': str
-                }),
+                Argument(
+                    'outfile',
+                    help='Write the current configs to this file.',
+                    type=str
+                ),
                 name='dump-config',
                 description='Dump the current configuration file content.'
             )
@@ -339,8 +353,8 @@ class CliApp(metaclass=MetaCli):
                         exist_ok=True
                     )
                 self._write_configs(configs, self.cli.config_file)
-            self._configs = configs
-            return configs
+            self._configs = ImmutableDict(**configs)
+            return self._configs
         return {}
 
     def start(self):
