@@ -210,10 +210,18 @@ class CliApp(metaclass=MetaCli):
     default_configs: dict = {}
     version = '0.0.1'
 
-    def __init__(self, config_file=None, loop=None, executor=None):
+    def __init__(
+            self,
+            config_file=None,
+            loop=None,
+            executor=None,
+            auto_write_configs=False,
+            add_dump_config_command=False,
+    ):
         self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
         )
+        self.auto_write_configs = auto_write_configs
         self._configs = None
 
         if is_windows():
@@ -227,10 +235,23 @@ class CliApp(metaclass=MetaCli):
             Argument(['--log-file'], {'type': argparse.FileType('w')})
         ]
 
+        commands = [getattr(self, x) for x in self._commands]
+
+        if add_dump_config_command:
+            command = Command(
+                Argument(['outfile'], {
+                    'help': 'Write the current configs to this file.',
+                    'type': str
+                }),
+                name='dump-config',
+                description='Dump the current configuration file content.'
+            )
+            commands.append(command(self._dump_configs))
+
         self.cli = Cli(
-            *(getattr(self, x) for x in self._commands),
+            *commands,
             prog=self.prog_name,
-            description=self.__doc__,
+            description=str(self.__doc__),
             config_file=config_file,
             global_arguments=common_g_arguments + self.global_arguments,
             on_parse=self._on_parse,
@@ -248,10 +269,12 @@ class CliApp(metaclass=MetaCli):
                 with open(self.cli.config_file, 'r') as f:
                     configs = yaml.load(f, Loader=yaml.RoundTripLoader)
             else:
-                os.makedirs(os.path.dirname(self.cli.config_file),
-                            exist_ok=True)
-                with open(self.cli.config_file, 'w') as f:
-                    yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
+                if self.auto_write_configs:
+                    os.makedirs(
+                        os.path.dirname(self.cli.config_file),
+                        exist_ok=True
+                    )
+                await self._write_configs(configs, self.cli.config_file)
             self._configs = configs
             return configs
         return {}
@@ -273,3 +296,12 @@ class CliApp(metaclass=MetaCli):
 
         if self.cli.config_file:
             self.logger.info(f'Using config {self.cli.config_file}')
+
+    async def _write_configs(self, configs, file):
+        def _w():
+            with open(file, 'w') as f:
+                yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
+        await self.executor.execute(_w)
+
+    async def _dump_configs(self, outfile):
+        await self._write_configs(self.configs, outfile)
