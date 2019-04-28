@@ -199,13 +199,13 @@ class MetaCli(type):
 
 class CliApp(metaclass=MetaCli):
     _commands = ()
-    _prog_name = ''
-    _global_arguments = []
-    _default_configs: dict = {}
-    _version = '0.0.1'
+    prog_name = ''
+    global_arguments = []
+    default_configs: dict = {}
+    version = '0.0.1'
 
     def __init__(self, config_file=None, loop=None, executor=None):
-        self._prog_name = self._prog_name or stringcase.spinalcase(
+        self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
         )
         self._configs = None
@@ -213,18 +213,18 @@ class CliApp(metaclass=MetaCli):
         if is_windows():
             colorama.init()
 
-        self.logger = setup_logger(self._prog_name)
+        self.logger = setup_logger(self.prog_name)
         self.async_wrapper = AsyncWrapper(loop, executor)
 
         self.cli = Cli(
             *(getattr(self, x) for x in self._commands),
-            prog=self._prog_name,
+            prog=self.prog_name,
             description=self.__doc__,
             config_file=config_file,
             global_arguments=[Argument(['-v', '--verbose'], {
                 'action': 'store_true',
                 'default': False
-            })] + self._global_arguments,
+            })] + self.global_arguments,
             on_parse=self._on_parse,
             default_command=self.main
         )
@@ -235,7 +235,7 @@ class CliApp(metaclass=MetaCli):
             # Cached
             return self._configs
         if self.cli.config_file:
-            configs = self._default_configs.copy()
+            configs = self.default_configs.copy()
             if os.path.exists(self.cli.config_file):
                 with open(self.cli.config_file, 'r') as f:
                     configs = yaml.load(f, Loader=yaml.RoundTripLoader)
@@ -249,7 +249,7 @@ class CliApp(metaclass=MetaCli):
         return {}
 
     def start(self):
-        self.logger.info(f'{self._prog_name} {self._version}')
+        self.logger.info(f'{self.prog_name} {self.version}')
         self.async_wrapper.loop.run_until_complete(self.cli.run())
 
     async def main(self, **kwargs):
