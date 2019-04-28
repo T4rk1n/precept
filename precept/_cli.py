@@ -156,7 +156,7 @@ class Cli:
         if command:
             await command(**kw)
         elif self.default_command:
-            self.default_command(**vars(namespace))
+            await self.default_command(**vars(namespace))
         else:
             self.parser.print_help()
 
@@ -252,7 +252,7 @@ class CliApp(metaclass=MetaCli):
         self.logger.info(f'{self._prog_name} {self._version}')
         self.async_wrapper.loop.run_until_complete(self.cli.run())
 
-    def main(self, **kwargs):
+    async def main(self, **kwargs):
         self.logger.error('Please enter a command')
         self.cli.parser.print_help()
 
