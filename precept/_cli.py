@@ -338,7 +338,7 @@ class CliApp(metaclass=MetaCli):
                         os.path.dirname(self.cli.config_file),
                         exist_ok=True
                     )
-                await self._write_configs(configs, self.cli.config_file)
+                self._write_configs(configs, self.cli.config_file)
             self._configs = configs
             return configs
         return {}
@@ -372,11 +372,12 @@ class CliApp(metaclass=MetaCli):
         if self.cli.config_file:
             self.logger.info(f'Using config {self.cli.config_file}')
 
-    async def _write_configs(self, configs, file):
-        def _w():
-            with open(file, 'w') as f:
-                yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
-        await self.executor.execute(_w)
+    # noinspection PyMethodMayBeStatic
+    def _write_configs(self, configs, file):
+        with open(file, 'w') as f:
+            yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
 
     async def _dump_configs(self, outfile):
-        await self._write_configs(self.configs, outfile)
+        await self.executor.execute_with_lock(
+            self._write_configs, self.configs, outfile
+        )
