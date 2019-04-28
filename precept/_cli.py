@@ -30,12 +30,28 @@ class AsyncExecutor:
             self.executor = ProcessPoolExecutor()
 
     async def execute(self, fn, *args, **kwargs):
+        """
+        Execute a sync function asynchronously in the executor.
+
+        :param fn: Synchronous function.
+        :param args:
+        :param kwargs:
+        :return:
+        """
         return await self.loop.run_in_executor(
             self.executor,
             functools.partial(fn, *args, **kwargs)
         )
 
     async def execute_with_lock(self, fn, *args, **kwargs):
+        """
+        Acquire lock before executing the function.
+
+        :param fn: Synchronous function.
+        :param args:
+        :param kwargs:
+        :return:
+        """
         await self.global_lock.acquire()
         ret = await self.execute(fn, *args, **kwargs)
         self.global_lock.release()
@@ -47,6 +63,13 @@ def _flags_key(flags):
 
 
 class Argument(typing.NamedTuple):
+    """
+    Argument of a Command, can either be optional or not depending on the flags
+
+    kwargs is a dict to give to `parser.add_argument`
+
+    Placeholder class, expected to change later.
+    """
     flags: typing.List[str]
     kwargs: dict
 
@@ -57,6 +80,12 @@ class CombinedFormatter(argparse.ArgumentDefaultsHelpFormatter,
 
 
 class Command:
+    """
+    Command decorator, methods of `CliApp` subclasses decorated with this gets
+    a sub-command in the parser.
+
+    Wrapped methods will gets the arguments by the ``Argument`` flag.
+    """
     arguments: typing.List[Argument]
     description: str
 
@@ -100,6 +129,7 @@ class Command:
 
 
 class Cli:
+    """argparse cli wrapper."""
     def __init__(self, *commands,
                  prog='',
                  description='',
@@ -144,6 +174,12 @@ class Cli:
             c.__command__.register(subparsers)
 
     async def run(self, args=None):
+        """
+        Parse and call the appropriate handler.
+
+        :param args: None takes sys.argv
+        :return:
+        """
         namespace = self.parser.parse_args(args=args)
         command = self.commands.get(namespace.command)
         kw = vars(namespace).copy()
@@ -204,6 +240,18 @@ class MetaCli(type):
 
 
 class CliApp(metaclass=MetaCli):
+    """
+    Auto cli generator, methods decorated with ``Command`` will have
+    a corresponding sub-command in the cli application.
+
+    Commands will get the arguments named as the last element of the command
+    flags.
+
+    Override `main` method for root handler, it gets all the `global_arguments`
+
+    If a key is in both `global_arguments` and `configs`, it gets a property
+    with key `config_{key}` that get the global first.
+    """
     _commands = ()
     prog_name = ''
     global_arguments = []
@@ -218,6 +266,14 @@ class CliApp(metaclass=MetaCli):
             auto_write_configs=False,
             add_dump_config_command=False,
     ):
+        """
+        :param config_file: Path to the default config file to use. Can be
+            specified with ``--config-file``
+        :param loop: Asyncio loop to use.
+        :param executor: concurrent executor to use.
+        :param auto_write_configs: Automatically write the config file.
+        :param add_dump_config_command: Add a ``dump-config`` command.
+        """
         self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
         )
@@ -260,6 +316,12 @@ class CliApp(metaclass=MetaCli):
 
     @property
     def configs(self):
+        """
+        Configs dictionary of the application, set ``config_file`` argument
+        to use with the default configs.
+
+        :return:
+        """
         if self._configs:
             # Cached
             return self._configs
@@ -280,10 +342,21 @@ class CliApp(metaclass=MetaCli):
         return {}
 
     def start(self):
+        """
+        Start the application loop.
+
+        :return:
+        """
         self.logger.info(f'{self.prog_name} {self.version}')
         self.executor.loop.run_until_complete(self.cli.run())
 
     async def main(self, **kwargs):
+        """
+        Handler when no command has been entered. Gets the globals arguments.
+
+        :param kwargs: Global arguments.
+        :return:
+        """
         self.logger.error('Please enter a command')
         self.cli.parser.print_help()
 
