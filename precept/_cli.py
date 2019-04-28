@@ -216,15 +216,17 @@ class CliApp(metaclass=MetaCli):
         self.logger = setup_logger(self.prog_name)
         self.async_wrapper = AsyncWrapper(loop, executor)
 
+        common_g_arguments = [
+            Argument(['-v', '--verbose'], {'action': 'store_true', 'default': False}),
+            Argument(['--log-file'], {'type': argparse.FileType('w')})
+        ]
+
         self.cli = Cli(
             *(getattr(self, x) for x in self._commands),
             prog=self.prog_name,
             description=self.__doc__,
             config_file=config_file,
-            global_arguments=[Argument(['-v', '--verbose'], {
-                'action': 'store_true',
-                'default': False
-            })] + self.global_arguments,
+            global_arguments=common_g_arguments + self.global_arguments,
             on_parse=self._on_parse,
             default_command=self.main
         )
@@ -259,6 +261,9 @@ class CliApp(metaclass=MetaCli):
     def _on_parse(self, args):
         if args.verbose:
             self.logger.setLevel(logging.DEBUG)
+
+        if args.log_file:
+            self.logger.addHandler(logging.StreamHandler(args.log_file))
 
         if self.cli.config_file:
             self.logger.info(f'Using config {self.cli.config_file}')
