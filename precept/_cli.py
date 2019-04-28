@@ -35,6 +35,12 @@ class AsyncWrapper:
             functools.partial(fn, *args, **kwargs)
         )
 
+    async def execute_with_lock(self, fn, *args, **kwargs):
+        await self.global_lock.acquire()
+        ret = await self.execute(fn, *args, **kwargs)
+        self.global_lock.release()
+        return ret
+
 
 def _flags_key(flags):
     return stringcase.snakecase(flags[-1].lstrip('-'))
