@@ -16,7 +16,7 @@ from ._tools import is_windows
 from ._logger import setup_logger
 
 
-class AsyncWrapper:
+class AsyncExecutor:
     """Execute function a ThreadPool or ProcessPool."""
     def __init__(self, loop=None, executor=None):
         self.loop = loop or asyncio.get_event_loop()
@@ -220,7 +220,7 @@ class CliApp(metaclass=MetaCli):
             colorama.init()
 
         self.logger = setup_logger(self.prog_name)
-        self.async_wrapper = AsyncWrapper(loop, executor)
+        self.executor = AsyncExecutor(loop, executor)
 
         common_g_arguments = [
             Argument(['-v', '--verbose'], {'action': 'store_true', 'default': False}),
@@ -258,7 +258,7 @@ class CliApp(metaclass=MetaCli):
 
     def start(self):
         self.logger.info(f'{self.prog_name} {self.version}')
-        self.async_wrapper.loop.run_until_complete(self.cli.run())
+        self.executor.loop.run_until_complete(self.cli.run())
 
     async def main(self, **kwargs):
         self.logger.error('Please enter a command')
