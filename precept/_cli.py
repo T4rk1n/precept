@@ -309,16 +309,22 @@ class CliApp(metaclass=MetaCli):
         commands = [getattr(self, x) for x in self._commands]
 
         if add_dump_config_command:
-            command = Command(
+            @Command(
                 Argument(
-                    'outfile',
+                    '-o', '--outfile',
                     help='Write the current configs to this file.',
-                    type=str
+                    type=str,
+                    default=config_file,
                 ),
                 name='dump-config',
                 description='Dump the current configuration file content.'
             )
-            commands.append(command(self._dump_configs))
+            async def dump_configs(outfile):
+                os.makedirs(os.path.dirname(outfile), exist_ok=True)
+                await self.executor.execute_with_lock(
+                    self._write_configs, self.configs, outfile
+                )
+            commands.append(dump_configs)
 
         self.cli = Cli(
             *commands,
@@ -352,7 +358,7 @@ class CliApp(metaclass=MetaCli):
                         os.path.dirname(self.cli.config_file),
                         exist_ok=True
                     )
-                self._write_configs(configs, self.cli.config_file)
+                    self._write_configs(configs, self.cli.config_file)
             self._configs = ImmutableDict(**configs)
             return self._configs
         return {}
@@ -389,9 +395,4 @@ class CliApp(metaclass=MetaCli):
     # noinspection PyMethodMayBeStatic
     def _write_configs(self, configs, file):
         with open(file, 'w') as f:
-            yaml.dump(configs, f, Dumper=yaml.RoundTripDumper)
-
-    async def _dump_configs(self, outfile):
-        await self.executor.execute_with_lock(
-            self._write_configs, self.configs, outfile
-        )
+            yaml.dump(dict(configs), f, Dumper=yaml.RoundTripDumper)
