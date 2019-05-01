@@ -151,7 +151,6 @@ class Cli:
                  prog='',
                  description='',
                  formatter_class=CombinedFormatter,
-                 config_file=None,
                  global_arguments=None,
                  default_command=None,
                  on_parse=None):
@@ -162,13 +161,6 @@ class Cli:
             description=description,
             formatter_class=formatter_class,
         )
-        self._config_file = config_file
-        if config_file:
-            self.parser.add_argument(
-                '-c', '--config-file',
-                default=config_file,
-                help='Config file path'
-            )
 
         self._global_arguments = global_arguments or []
         self.globals = {}
@@ -200,11 +192,8 @@ class Cli:
         kw = vars(namespace).copy()
         kw.pop('command')
 
-        if self._config_file:
-            self._config_file = kw.pop('config_file')
-
         for g in self._global_arguments:
-            key = stringcase.snakecase(g.flags[-1].lstrip('-'))
+            key = _flags_key(g.flags)
             self.globals[key] = kw.pop(key)
 
         if callable(self._on_parse):
@@ -234,6 +223,8 @@ class ConfigProp:
 
 class MetaCli(type):
     def __new__(mcs, name, bases, attributes):
+        # TODO evaluate if the wrapped command is a class or a function.
+        # Class will be a nested command subparser.
         new_attributes = dict(**attributes)
         new_attributes['_commands'] = [
             x.__name__
@@ -275,10 +266,9 @@ class CliApp(metaclass=MetaCli):
 
     def __init__(
             self,
-            config_file=None,
+            config_file: typing.Union[str, typing.List[str]] = None,
             loop=None,
             executor=None,
-            auto_write_configs=False,
             add_dump_config_command=False,
     ):
         """
@@ -286,13 +276,17 @@ class CliApp(metaclass=MetaCli):
             specified with ``--config-file``
         :param loop: Asyncio loop to use.
         :param executor: concurrent executor to use.
-        :param auto_write_configs: Automatically write the config file.
         :param add_dump_config_command: Add a ``dump-config`` command.
         """
         self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
         )
-        self.auto_write_configs = auto_write_configs
+        self._config_file = config_file
+        if not isinstance(self._config_file, list)\
+                and isinstance(config_file, str):
+            self._config_file = [config_file]
+        self._user_configs = None
+
         self._configs = None
 
         if is_windows():
@@ -306,6 +300,15 @@ class CliApp(metaclass=MetaCli):
             Argument('--log-file', type=argparse.FileType('w')),
             Argument('--quiet', action='store_true'),
         ]
+
+        if config_file:
+            common_g_arguments.append(
+                Argument(
+                    '-c', '--config-file',
+                    type=str,
+                    help='Config file path'
+                )
+            )
 
         commands = [getattr(self, x) for x in self._commands]
 
@@ -331,11 +334,18 @@ class CliApp(metaclass=MetaCli):
             *commands,
             prog=self.prog_name,
             description=str(self.__doc__),
-            config_file=config_file,
             global_arguments=common_g_arguments + self.global_arguments,
             on_parse=self._on_parse,
             default_command=self.main
         )
+
+    @property
+    def config_path(self):
+        if self._user_configs:
+            return self._user_configs
+        for config in self._config_file:
+            if os.path.exists(config):
+                return config
 
     @property
     def configs(self):
@@ -348,21 +358,12 @@ class CliApp(metaclass=MetaCli):
         if self._configs:
             # Cached
             return self._configs
-        if self.cli.config_file:
-            configs = self.default_configs.copy()
-            if os.path.exists(self.cli.config_file):
-                with open(self.cli.config_file, 'r') as f:
-                    configs = yaml.load(f, Loader=yaml.RoundTripLoader)
-            else:
-                if self.auto_write_configs:
-                    os.makedirs(
-                        os.path.dirname(self.cli.config_file),
-                        exist_ok=True
-                    )
-                    self._write_configs(configs, self.cli.config_file)
+        if self.config_path:
+            with open(self.config_path, 'r') as f:
+                configs = yaml.load(f, Loader=yaml.RoundTripLoader)
             self._configs = ImmutableDict(**configs)
             return self._configs
-        return {}
+        return ImmutableDict(**self.default_configs)
 
     def start(self):
         """
@@ -393,8 +394,12 @@ class CliApp(metaclass=MetaCli):
         if args.quiet:
             self.logger.setLevel(logging.ERROR)
 
-        if self.cli.config_file:
-            self.logger.info(f'Using config {self.cli.config_file}')
+        if self._config_file:
+            if args.config_file:
+                self._user_configs = args.config_file
+
+            if self.config_path:
+                self.logger.info(f'Using config {self.config_path}')
 
     # noinspection PyMethodMayBeStatic
     def _write_configs(self, configs, file):
