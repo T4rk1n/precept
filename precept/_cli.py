@@ -303,7 +303,8 @@ class CliApp(metaclass=MetaCli):
 
         common_g_arguments = [
             Argument('-v', '--verbose', action='store_true', default=False),
-            Argument('--log-file', type=argparse.FileType('w'))
+            Argument('--log-file', type=argparse.FileType('w')),
+            Argument('--quiet', action='store_true'),
         ]
 
         commands = [getattr(self, x) for x in self._commands]
@@ -388,6 +389,9 @@ class CliApp(metaclass=MetaCli):
 
         if args.log_file:
             self.logger.addHandler(logging.StreamHandler(args.log_file))
+
+        if args.quiet:
+            self.logger.setLevel(logging.ERROR)
 
         if self.cli.config_file:
             self.logger.info(f'Using config {self.cli.config_file}')
