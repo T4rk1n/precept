@@ -315,7 +315,7 @@ class CliApp(metaclass=MetaCli):
         if add_dump_config_command:
             @Command(
                 Argument(
-                    '-o', '--outfile',
+                    'outfile',
                     help='Write the current configs to this file.',
                     type=str,
                     default=config_file,
@@ -324,7 +324,9 @@ class CliApp(metaclass=MetaCli):
                 description='Dump the current configuration file content.'
             )
             async def dump_configs(outfile):
-                os.makedirs(os.path.dirname(outfile), exist_ok=True)
+                dirname = os.path.dirname(outfile)
+                if dirname:
+                    os.makedirs(dirname, exist_ok=True)
                 await self.executor.execute_with_lock(
                     self._write_configs, self.configs, outfile
                 )
