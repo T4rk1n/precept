@@ -79,12 +79,17 @@ class KeyHandler:
         self._producer = threading.Thread(target=self.read)
         self._producer.daemon = True
         self._producer.start()
-        self._consumer = asyncio.ensure_future(self.handle(), loop=loop)
+        self._consumer = asyncio.ensure_future(self.handle(), loop=self.loop)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self.stop()
         await self._consumer
+
+    def print_keys(self, file=sys.stdout):
+        for k, v in self.handlers.items():
+            doc = getattr(v, '__doc__', getattr(v, '__name__', ''))
+            print(f'{k}: {doc}', file=file)
 
 
 if __name__ == '__main__':
