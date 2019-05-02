@@ -294,6 +294,7 @@ class CliApp(metaclass=MetaCli):
 
         self.logger = setup_logger(self.prog_name)
         self.executor = AsyncExecutor(loop, executor)
+        self.loop = self.executor.loop
 
         common_g_arguments = [
             Argument('-v', '--verbose', action='store_true', default=False),
@@ -374,7 +375,7 @@ class CliApp(metaclass=MetaCli):
         :return:
         """
         self.logger.info(f'{self.prog_name} {self.version}')
-        self.executor.loop.run_until_complete(self.cli.run())
+        self.loop.run_until_complete(self.cli.run())
 
     async def main(self, **kwargs):
         """
