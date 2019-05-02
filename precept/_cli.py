@@ -70,7 +70,7 @@ class Argument(ImmutableDict):
     def __init__(
             self,
             *flags: str,
-            type=None,
+            type: type = None,
             help: str = None,
             choices: typing.Iterable = None,
             default: typing.Any = None,
@@ -368,14 +368,13 @@ class CliApp(metaclass=MetaCli):
             return self._configs
         return ImmutableDict(**self.default_configs)
 
-    def start(self):
+    def start(self, args=None):
         """
         Start the application loop.
 
         :return:
         """
-        self.logger.info(f'{self.prog_name} {self.version}')
-        self.loop.run_until_complete(self.cli.run())
+        self.loop.run_until_complete(self.cli.run(args=args))
 
     async def main(self, **kwargs):
         """
@@ -403,6 +402,8 @@ class CliApp(metaclass=MetaCli):
 
             if self.config_path:
                 self.logger.info(f'Using config {self.config_path}')
+
+        self.logger.info(f'{self.prog_name} {self.version}')
 
     # noinspection PyMethodMayBeStatic
     def _write_configs(self, configs, file):
