@@ -6,7 +6,7 @@ from ._tools import is_windows
 
 
 class GetChar:
-    def __init__(self):
+    def __init__(self):  # pragma: no cover
         if is_windows():
             # pylint: disable=import-error
             import msvcrt
@@ -32,10 +32,10 @@ class GetChar:
 
             self.get_char = get_char
 
-    def __call__(self):
+    def __call__(self):  # pragma: no cover
         return self.get_char()
 
-    async def deferred(self, executor):
+    async def deferred(self, executor):  # pragma: no cover
         return await executor.execute(self.get_char)
 
 
@@ -43,7 +43,7 @@ getch = GetChar()
 
 
 class KeyHandler:
-    def __init__(self, handlers, loop=None):
+    def __init__(self, handlers, loop=None):  # pragma: no cover
         self.handlers = handlers
         self.default_handler = self.handlers.get('*')
         self.loop = loop or asyncio.get_event_loop()
@@ -52,16 +52,16 @@ class KeyHandler:
         self._consumer = None
         self._producer = None
 
-    def stop(self):
+    def stop(self):  # pragma: no cover
         self.stop_event.set()
 
-    def read(self):
+    def read(self):  # pragma: no cover
         # Make non-blocking.
         while not self.stop_event.is_set():
             char = getch()
             asyncio.ensure_future(self.queue.put(char), loop=self.loop)
 
-    async def handle(self):
+    async def handle(self):  # pragma: no cover
         while not self.stop_event.is_set():
             await asyncio.sleep(0.00001)
             try:
@@ -77,24 +77,24 @@ class KeyHandler:
                 else:
                     print('no handler')
 
-    async def __aenter__(self):
+    async def __aenter__(self):  # pragma: no cover
         self._producer = threading.Thread(target=self.read)
         self._producer.daemon = True
         self._producer.start()
         self._consumer = asyncio.ensure_future(self.handle(), loop=self.loop)
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):  # pragma: no cover
         self.stop()
         await self._consumer
 
-    def print_keys(self, file=sys.stdout):
+    def print_keys(self, file=sys.stdout):  # pragma: no cover
         for k, v in self.handlers.items():
             doc = getattr(v, '__doc__', getattr(v, '__name__', ''))
             print(f'{k}: {doc}', file=file)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     main_loop = asyncio.get_event_loop()
 
     async def main():

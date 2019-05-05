@@ -57,10 +57,10 @@ def format_table(data, formatting=None):
     return rows
 
 
-def print_table(data, formatting=None, file=sys.stdout):
+def print_table(data, formatting=None, file=sys.stdout):  # pragma: no cover
     print('\n'.join(format_table(data, formatting,)), file=file)
 
 
-def goto_xy(stream, x, y):
+def goto_xy(stream, x, y):  # pragma: no cover
     # Make sure colorama is init on windows.
     print('%c[%d;%df' % (0x1B, y, x), end='', file=stream)

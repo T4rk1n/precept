@@ -18,7 +18,7 @@ def colorize(text, bg=None, fg=None, style=None):
 
 async def spinner(condition,
                   sleep_time=0.25, message='',
-                  fg=Fore.WHITE, bg=None):
+                  fg=Fore.WHITE, bg=None):  # pragma: no cover
     i = 0
     while not condition():
         m = i % 8
