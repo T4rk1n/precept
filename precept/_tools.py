@@ -40,7 +40,7 @@ def format_table(data, formatting=None):
         row_len += col + 1
 
     if not formatting:
-        formatting = lambda e: e
+        formatting = lambda e: e  # noqa: E731
 
     chunks = chunk_list(data, col)
     rows = ['-' * row_len]

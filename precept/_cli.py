@@ -30,31 +30,31 @@ class AsyncExecutor:
         else:
             self.executor = ProcessPoolExecutor()
 
-    async def execute(self, fn, *args, **kwargs):
+    async def execute(self, func, *args, **kwargs):
         """
         Execute a sync function asynchronously in the executor.
 
-        :param fn: Synchronous function.
+        :param func: Synchronous function.
         :param args:
         :param kwargs:
         :return:
         """
         return await self.loop.run_in_executor(
             self.executor,
-            functools.partial(fn, *args, **kwargs)
+            functools.partial(func, *args, **kwargs)
         )
 
-    async def execute_with_lock(self, fn, *args, **kwargs):
+    async def execute_with_lock(self, func, *args, **kwargs):
         """
         Acquire lock before executing the function.
 
-        :param fn: Synchronous function.
+        :param func: Synchronous function.
         :param args:
         :param kwargs:
         :return:
         """
         await self.global_lock.acquire()
-        ret = await self.execute(fn, *args, **kwargs)
+        ret = await self.execute(func, *args, **kwargs)
         self.global_lock.release()
         return ret
 
@@ -67,6 +67,8 @@ class Argument(ImmutableDict):
     """
     Argument of a Command, can either be optional or not depending on the flags
     """
+
+    # pylint: disable=unused-argument, redefined-builtin
     def __init__(
             self,
             *flags: str,
@@ -110,6 +112,7 @@ class Command:
     arguments: typing.Iterable[Argument]
     description: str
 
+    # pylint: disable=redefined-builtin
     def __init__(self, *arguments: Argument,
                  name=None, description=None, help=None):
         self.arguments = arguments
@@ -207,14 +210,10 @@ class Cli:
         else:
             self.parser.print_help()
 
-    @property
-    def config_file(self):
-        return self._config_file
-
 
 class ConfigProp:
     def __set_name__(self, owner, name):
-        self.name = name
+        self.name = name  # pylint: disable=attribute-defined-outside-init
 
     def __get__(self, instance, owner):
         g = instance.cli.globals.get(self.name)  # From cli arg priority.
@@ -225,7 +224,7 @@ class ConfigProp:
 class MetaCli(type):
     def __new__(mcs, name, bases, attributes):
         # TODO evaluate if the wrapped command is a class or a function.
-        # Class will be a nested command subparser.
+        #  Class will be a nested command subparser.
         new_attributes = dict(**attributes)
         new_attributes['_commands'] = [
             x.__name__
@@ -240,8 +239,12 @@ class MetaCli(type):
             for y in attributes.get('_global_arguments', [])
         ]
 
+        # TODO remove/refactor ConfigProp ?
+        #  Should get a special case of ImmutableDict.
         for x in default_configs.union(flags):
             new_attributes[f'config_{x}'] = ConfigProp()
+
+        # TODO add a `__call__` method, used to set the cli in `setup.py`
 
         return type.__new__(mcs, name, bases, new_attributes)
 
@@ -349,6 +352,7 @@ class CliApp(metaclass=MetaCli):
         for config in self._config_file:
             if os.path.exists(config):
                 return config
+        return ''
 
     @property
     def configs(self):
@@ -376,6 +380,7 @@ class CliApp(metaclass=MetaCli):
         """
         self.loop.run_until_complete(self.cli.run(args=args))
 
+    # pylint: disable=unused-argument
     async def main(self, **kwargs):
         """
         Handler when no command has been entered. Gets the globals arguments.
@@ -406,6 +411,7 @@ class CliApp(metaclass=MetaCli):
         self.logger.info(f'{self.prog_name} {self.version}')
 
     # noinspection PyMethodMayBeStatic
+    # pylint: disable=no-self-use
     def _write_configs(self, configs, file):
         with open(file, 'w') as f:
             yaml.dump(dict(configs), f, Dumper=yaml.RoundTripDumper)

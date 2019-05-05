@@ -83,7 +83,10 @@ def test_config_override(config_name, config_value):
     try:
         cli = ConfigCli()
         cli._write_configs(override_configs, config_file)
-        cli.start(f'--quiet --config-file {config_file} use-config {config_name}'.split(' '))
+        cli.start(
+            f'--quiet --config-file {config_file}'
+            f' use-config {config_name}'.split(' ')
+        )
 
         assert cli.result == config_value
     finally:
