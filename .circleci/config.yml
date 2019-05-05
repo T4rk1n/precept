@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.6-stretch-node-browsers
+    environment:
+      PYTHONPATH: ~/repo
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum ".circleci/config.yml" }}
+
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt --quiet
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}-{{ checksum ".circleci/config.yml" }}
+
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest -ra --junitxml=~/test-reports/precept/results.xml
+
+      - store_artifacts:
+          path: ~/test-reports
+          destination: test-reports
+
+      - store_test_results:
+          path: ~/test-reports
