@@ -1,3 +1,7 @@
-colorama
-stringcase
-ruamel.yaml
+colorama==0.4.1
+stringcase==1.2.0
+ruamel.yaml==0.15.89
+
+# dev
+pytest==4.4.1
+pylint==2.3.1
