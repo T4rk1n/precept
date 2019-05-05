@@ -119,7 +119,8 @@ class Command:
         self.help = help
 
     def __call__(self, func):
-        self.command_name = getattr(func, '__name__')
+        if not self.command_name:
+            self.command_name = getattr(func, '__name__')
 
         setattr(func, '__command__', self)
 
@@ -321,7 +322,6 @@ class CliApp(metaclass=MetaCli):
                     type=str,
                     default=config_file,
                 ),
-                name='dump-config',
                 description='Dump the current configuration file content.'
             )
             async def dump_configs(outfile):
