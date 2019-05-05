@@ -32,6 +32,7 @@ jobs:
           command: |
             . venv/bin/activate
             pytest -ra --junitxml=~/test-reports/precept/results.xml --pylint --flake8 --cov=precept
+            coveralls
 
       - store_artifacts:
           path: ~/test-reports
