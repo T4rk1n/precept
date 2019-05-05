@@ -7,11 +7,18 @@ def test_immutable_dict():
     data = ImmutableDict(foo='bar', bar='foo', n=1)
     assert 'foo' in data
     assert data.get('bar') == 'foo'
+    assert data.foo == 'bar'
     assert data['n'] == 1
     assert len(data) == 3
 
     with pytest.raises(TypeError):
         data['foo'] = 'not foo'
+
+    with pytest.raises(KeyError):
+        d = data.dont_exist
+
+    with pytest.raises(TypeError):
+        data.foo = 'not foo'
 
 
 def test_immutable_props():

@@ -47,7 +47,10 @@ class ImmutableMeta(abc.ABCMeta):
 
 class ImmutableDict(collections.abc.Mapping, metaclass=ImmutableMeta):
     def __init__(self, **kwargs):
+        self._initialized = False
+        self._class_attrs = dir(self.__class__)
         self._data = kwargs
+        self._initialized = True
 
     def __getitem__(self, k: str, default=None) -> typing.Any:
         return self._data.get(k, default)
@@ -64,3 +67,19 @@ class ImmutableDict(collections.abc.Mapping, metaclass=ImmutableMeta):
 
     def __repr__(self):
         return str(self)
+
+    def __getattribute__(self, item):
+        if item.startswith('_') or item in self._class_attrs:
+            return super(ImmutableDict, self).__getattribute__(item)
+
+        if item in self._data:
+            return self._data[item]
+
+        raise KeyError(f'Invalid key {item}')
+
+    def __setattr__(self, key, value):
+        if self.__dict__.get('_initialized'):
+            raise TypeError(
+                f'Property {self.__class__.__name__}.{key} is immutable'
+            )
+        super(ImmutableDict, self).__setattr__(key, value)
