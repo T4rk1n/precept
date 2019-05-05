@@ -1,8 +1,10 @@
 # precept
 
 [![CircleCI](https://circleci.com/gh/T4rk1n/precept.svg?style=svg)](https://circleci.com/gh/T4rk1n/precept)
+[![Coverage Status](https://coveralls.io/repos/github/T4rk1n/precept/badge.svg)](https://coveralls.io/github/T4rk1n/precept)
 [![PyPI version](https://badge.fury.io/py/precept.svg)](https://badge.fury.io/py/precept)
 [![LICENSE](https://img.shields.io/github/license/T4rk1n/precept.svg)](./LICENSE)
+[![Downloads](https://pepy.tech/badge/precept)](https://pepy.tech/project/precept)
 
 Toolbox to create async command line applications.
 
