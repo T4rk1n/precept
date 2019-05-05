@@ -8,6 +8,7 @@ from ._tools import is_windows
 class GetChar:
     def __init__(self):
         if is_windows():
+            # pylint: disable=import-error
             import msvcrt
             self.get_char = msvcrt.getwch
         else:
@@ -15,18 +16,19 @@ class GetChar:
             import tty
 
             def get_char():
-                fd = sys.stdin.fileno()
-                old = termios.tcgetattr(fd)
+                # pylint: disable=assignment-from-no-return
+                fileno = sys.stdin.fileno()
+                old = termios.tcgetattr(fileno)
 
                 try:
-                    tty.setraw(fd)
-                    raw = termios.tcgetattr(fd)
+                    tty.setraw(fileno)
+                    raw = termios.tcgetattr(fileno)
                     raw[1] = old[1]
-                    termios.tcsetattr(fd, termios.TCSADRAIN, raw)
-                    ch = sys.stdin.read(1)
+                    termios.tcsetattr(fileno, termios.TCSADRAIN, raw)
+                    char = sys.stdin.read(1)
                 finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old)
-                return ch
+                    termios.tcsetattr(fileno, termios.TCSADRAIN, old)
+                return char
 
             self.get_char = get_char
 
@@ -56,8 +58,8 @@ class KeyHandler:
     def read(self):
         # Make non-blocking.
         while not self.stop_event.is_set():
-            ch = getch()
-            asyncio.ensure_future(self.queue.put(ch), loop=self.loop)
+            char = getch()
+            asyncio.ensure_future(self.queue.put(char), loop=self.loop)
 
     async def handle(self):
         while not self.stop_event.is_set():
@@ -93,24 +95,24 @@ class KeyHandler:
 
 
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+    main_loop = asyncio.get_event_loop()
 
     async def main():
 
-        ns = {
+        namespace = {
             'i': 0
         }
 
         def hand(msg, stop):
-            ns['i'] += 1
-            if ns['i'] >= 10:
+            namespace['i'] += 1
+            if namespace['i'] >= 10:
                 stop()
             print(f'echo {msg}', file=sys.stderr)
 
-        async with KeyHandler({'*': hand}, loop=loop) as k:
+        async with KeyHandler({'*': hand}, loop=main_loop) as k:
             print('Type 10 chars')
             while not k.stop_event.is_set():
                 print('.', end='', flush=True)
-                await asyncio.sleep(1, loop=loop)
+                await asyncio.sleep(1, loop=main_loop)
 
-    loop.run_until_complete(main())
+    main_loop.run_until_complete(main())

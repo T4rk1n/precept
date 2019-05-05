@@ -31,7 +31,7 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pytest -ra --junitxml=~/test-reports/precept/results.xml
+            pytest -ra --junitxml=~/test-reports/precept/results.xml --pylint --flake8
 
       - store_artifacts:
           path: ~/test-reports

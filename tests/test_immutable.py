@@ -15,9 +15,11 @@ def test_immutable_dict():
         data['foo'] = 'not foo'
 
     with pytest.raises(KeyError):
-        d = data.dont_exist
+        # pylint: disable=unused-variable
+        d = data.dont_exist  # noqa: F841
 
     with pytest.raises(TypeError):
+        # pylint: disable=attribute-defined-outside-init
         data.foo = 'not foo'
 
 
@@ -33,6 +35,7 @@ def test_immutable_props():
     assert len(first) == 3
 
     with pytest.raises(TypeError) as context:
+        # pylint: disable=attribute-defined-outside-init
         first.foo = 'bar'
 
     assert 'TestDict.foo is immutable' in str(context.value)

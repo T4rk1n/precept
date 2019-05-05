@@ -13,7 +13,7 @@ __all__ = [
 
 class ImmutableProp:
     def __set_name__(self, owner, name):
-        self.name = name
+        self.name = name  # pylint: disable=attribute-defined-outside-init
 
     def __get__(self, instance, owner):
         # noinspection PyProtectedMember
@@ -26,6 +26,7 @@ class ImmutableProp:
 
 
 class ImmutableMeta(abc.ABCMeta):
+    # pylint: disable=arguments-differ
     def __new__(mcs, name, bases, attributes):
         new_attributes = attributes.copy()
 
