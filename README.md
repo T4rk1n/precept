@@ -1,3 +1,42 @@
 # precept
 
-Toolbox to create async command line application.
+[![CircleCI](https://circleci.com/gh/T4rk1n/precept.svg?style=svg)](https://circleci.com/gh/T4rk1n/precept)
+[![PyPI version](https://badge.fury.io/py/precept.svg)](https://badge.fury.io/py/precept)
+[![LICENSE](https://img.shields.io/github/license/T4rk1n/precept.svg)](./LICENSE)
+
+Toolbox to create async command line applications.
+
+## Install 
+
+Install with pip: `$ pip install precept`
+
+## Usage
+
+Basic:
+```python
+from precept import CliApp, Command, Argument
+
+class MyCli(CliApp):
+    """
+    The name of the command will be the 
+    Class docstring is added as cli description.
+    """
+    @Command(Argument('argument', type=str))
+    async def my_command(self, argument):
+        print(argument)
+
+def cli():
+    MyCli().start()
+
+if __name__ == '__main__':
+   cli()
+```
+
+For local testing: Set `entry_points.console_script` to `my-cli = my_package.my_cli:cli` in `setup.py` and `$ pip install -e .`
+
+Then call: `$ my-cli my-command hello` -> print `hello`
+
+## License
+
+[MIT license](./LICENSE)
+
