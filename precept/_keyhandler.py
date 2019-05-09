@@ -1,8 +1,88 @@
 import asyncio
+import string
 import sys
 import threading
+from itertools import chain
 
 from ._tools import is_windows
+
+
+class Key:
+    def __init__(self, value, clean=None):
+        self.value = value
+        self.clean = clean
+
+    def __str__(self):
+        return self.clean or self.value
+
+    def __eq__(self, other):
+        if isinstance(other, Key):
+            return other.value == self.value
+        if isinstance(other, str):
+            return other == self.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)
+
+    def __repr__(self):
+        return f"<Key '{self.clean or self.value}'>"
+
+
+class Keys:
+    SPACE = Key(' ', 'space')
+    BACKSPACE = Key('\x7f', 'backspace')
+    ENTER = Key('\r', 'enter')
+    ESCAPE = Key('\x1b', 'escape')
+    INSERT = Key('\x1b[2~', 'insert')
+    END = Key('\x1b[F', 'end')
+    HOME = Key('\x1b[H', 'home')
+    DELETE = Key('\x1b[3~', 'delete')
+    DOWN = Key('\x1b[B', 'down')
+    UP = Key('\x1b[A', 'up')
+    LEFT = Key('\x1b[D', 'left')
+    RIGHT = Key('\x1b[C', 'right')
+
+    F1 = Key('\x1bOP', 'F1')
+    F2 = Key('\x1bOQ', 'F2')
+    F3 = Key('\x1bOR', 'F3')
+    F4 = Key('\x1bOS', 'F4')
+    F5 = Key('\x1bO15~', 'F5')
+    F6 = Key('\x1bO17~', 'F6')
+    F7 = Key('\x1bO18~', 'F7')
+    F8 = Key('\x1bO19~', 'F8')
+    F9 = Key('\x1bO20~', 'F9')
+    F10 = Key('\x1bO21~', 'F10')
+    F11 = Key('\x1bO23~', 'F11')
+    F12 = Key('\x1bO24~', 'F12')
+
+    CTRL_C = Key('\x03', 'ctrl-c')
+    CTRL_A = Key('\x01', 'ctrl-a')
+    CTRL_ALT_A = Key('\x1b\x01', 'ctrl-alt-a')
+    CTRL_ALT_DEL = Key('\x1b[3^', 'ctrl-alt-del')
+    CTRL_B = Key('\x02', 'ctrl-b')
+    CTRL_D = Key('\x04', 'ctrl-d')
+    CTRL_E = Key('\x05', 'ctrl-e')
+    CTRL_F = Key('\x06', 'ctrl-f')
+    CTRL_Z = Key('\x1a', 'ctrl-z')
+
+    SPECIAL_KEYS = (
+        SPACE, BACKSPACE, ENTER, ESCAPE, INSERT, END, HOME,
+        DELETE, DOWN, UP, LEFT, RIGHT,
+        F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
+        CTRL_C, CTRL_A, CTRL_ALT_A, CTRL_ALT_DEL, CTRL_B,
+        CTRL_D, CTRL_E, CTRL_F, CTRL_Z
+    )
+    keys = {
+        x: Key(x) for x in chain(string.ascii_letters, string.digits)
+    }
+    keys.update({
+        x.value: x for x in SPECIAL_KEYS
+    })
+
+    @classmethod
+    def get_key(cls, value, default=None):
+        return cls.keys.get(value) or default
 
 
 class GetChar:
@@ -43,9 +123,12 @@ getch = GetChar()
 
 
 class KeyHandler:
-    def __init__(self, handlers, loop=None):  # pragma: no cover
+    def __init__(self, handlers, loop=None, default_handler=None):  # pragma: no cover # noqa: E501
         self.handlers = handlers
-        self.default_handler = self.handlers.get('*')
+        self.handlers.update({
+            Keys.CTRL_C: lambda _, stop: stop(),
+        })
+        self.default_handler = default_handler
         self.loop = loop or asyncio.get_event_loop()
         self.queue = asyncio.Queue(loop=self.loop)
         self.stop_event = asyncio.Event(loop=self.loop)
@@ -70,12 +153,10 @@ class KeyHandler:
                 pass
             else:
                 handler = self.handlers.get(msg)
-                if not handler:
-                    handler = self.default_handler
                 if handler:
                     handler(msg, self.stop)
-                else:
-                    print('no handler')
+                elif self.default_handler:
+                    self.default_handler(msg, self.stop)
 
     async def __aenter__(self):  # pragma: no cover
         self._producer = threading.Thread(target=self.read)
@@ -91,7 +172,8 @@ class KeyHandler:
     def print_keys(self, file=sys.stdout):  # pragma: no cover
         for k, v in self.handlers.items():
             doc = getattr(v, '__doc__', getattr(v, '__name__', ''))
-            print(f'{k}: {doc}', file=file)
+            clean_key = Keys.get_key(k, k)
+            print(f'{clean_key}: {doc}', file=file)
 
 
 if __name__ == '__main__':  # pragma: no cover
@@ -107,9 +189,10 @@ if __name__ == '__main__':  # pragma: no cover
             namespace['i'] += 1
             if namespace['i'] >= 10:
                 stop()
-            print(f'echo {msg}', file=sys.stderr)
+            print(repr(msg), file=sys.stderr)
 
-        async with KeyHandler({'*': hand}, loop=main_loop) as k:
+        async with KeyHandler({}, default_handler=hand, loop=main_loop) as k:
+            k.print_keys()
             print('Type 10 chars')
             while not k.stop_event.is_set():
                 print('.', end='', flush=True)
