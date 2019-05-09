@@ -94,7 +94,11 @@ class Argument(ImmutableDict):
             # Otherwise the default value don't show up.
             options['help'] = '-'
 
-        parser.add_argument(*self.flags, **options)
+        flags = self.flags
+        if len(self.flags) == 1 and not self.flags[0].startswith('-'):
+            flags = [stringcase.snakecase(flags[0])]
+
+        parser.add_argument(*flags, **options)
 
 
 class CombinedFormatter(argparse.ArgumentDefaultsHelpFormatter,
