@@ -1,4 +1,13 @@
-# Changelogs
+# Changelog
+
+## [0.1.1]
+### Fixed
+
+- KeyHandler fixes:
+    - Remove no handler print.
+    - Add Keys class with most specials keys.
+    - Handle ctrl-c by default.
+- Fix single argument casing (auto convert to snake_case).
 
 ## [0.1.0]
 ### Added
