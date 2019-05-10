@@ -129,6 +129,8 @@ class Command:
         if not self.command_name:
             self.command_name = getattr(func, '__name__')
 
+        if not self.description:
+            self.description = getattr(func, '__doc__', '')
         setattr(func, '__command__', self)
 
         return func
