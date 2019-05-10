@@ -2,10 +2,10 @@ import os
 
 import pytest
 
-from precept import CliApp, Command, Argument
+from precept import Precept, Command, Argument
 
 
-class SimpleCli(CliApp):
+class SimpleCli(Precept):
     result = None
     global_arguments = [
         Argument('--universal'),
