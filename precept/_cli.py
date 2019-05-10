@@ -280,6 +280,7 @@ class Precept(metaclass=PreceptMeta):
             loop=None,
             executor=None,
             add_dump_config_command=False,
+            help_formatter=CombinedFormatter,
     ):
         """
         :param config_file: Path to the default config file to use. Can be
@@ -348,7 +349,8 @@ class Precept(metaclass=PreceptMeta):
             description=str(self.__doc__),
             global_arguments=common_g_arguments + self.global_arguments,
             on_parse=self._on_parse,
-            default_command=self.main
+            default_command=self.main,
+            formatter_class=help_formatter,
         )
 
     @property
