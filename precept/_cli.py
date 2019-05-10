@@ -225,7 +225,7 @@ class ConfigProp:
         return g or c
 
 
-class MetaCli(type):
+class PreceptMeta(type):
     def __new__(mcs, name, bases, attributes):
         # TODO evaluate if the wrapped command is a class or a function.
         #  Class will be a nested command subparser.
@@ -253,7 +253,7 @@ class MetaCli(type):
         return type.__new__(mcs, name, bases, new_attributes)
 
 
-class CliApp(metaclass=MetaCli):
+class Precept(metaclass=PreceptMeta):
     """
     Auto cli generator, methods decorated with ``Command`` will have
     a corresponding sub-command in the cli application.

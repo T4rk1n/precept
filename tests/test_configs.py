@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from ruamel import yaml
 
-from precept import CliApp, Command, Argument
+from precept import Precept, Command, Argument
 
 
 override_configs = {
@@ -21,7 +21,7 @@ config_files = [
 ]
 
 
-class ConfigCli(CliApp):
+class ConfigCli(Precept):
     default_configs = {
         'config_num': 1,
         'config_str': 'foo',
@@ -102,7 +102,7 @@ def test_dump_config_defaults():
         assert os.path.exists(config_file)
         with open(config_file, 'r') as f:
             configs = yaml.load(f, Loader=yaml.RoundTripLoader)
-        for k, v in CliApp.default_configs.items():
+        for k, v in Precept.default_configs.items():
             assert configs[k] == v
     finally:
         if os.path.exists(config_file):
