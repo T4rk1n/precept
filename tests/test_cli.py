@@ -1,4 +1,5 @@
 import os
+import sys
 
 import pytest
 
@@ -26,6 +27,7 @@ class SimpleCli(Precept):
         )
     )
     async def simple(self, foo, bar):
+        """Help from docstring"""
         self.result = foo + bar
 
     @Command(
@@ -90,3 +92,19 @@ def test_log_file(debug, verbose):
     finally:
         if os.path.exists(log_file):
             os.remove(log_file)
+
+
+def test_command_docstring(capsys, monkeypatch):
+    cli = SimpleCli()
+
+    def patch_exit(_):
+        # Need to patch exit because calling help will exit from argparse
+        # The command will be executed...
+        pass
+
+    monkeypatch.setattr(sys, 'exit', patch_exit)
+
+    cli.start('--help'.split(' '))
+
+    out, err = capsys.readouterr()
+    assert 'Help from docstring' in out
