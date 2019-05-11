@@ -8,7 +8,7 @@ async def test_spinner(capsys):
     messages = ['one', 'two', 'three', 'four', 'five', 'six']
 
     namespace = {
-        'i': 0
+        'i': 0,
     }
 
     def on_spin():
@@ -27,6 +27,7 @@ async def test_spinner(capsys):
         on_spin,
         message=lambda: f'{messages[namespace["i"]]} ... '
     )
+    assert namespace['i'] == len(messages)
 
 
 def test_table(capsys):

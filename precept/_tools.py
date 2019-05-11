@@ -57,7 +57,7 @@ def format_table(data, formatting=None):
     return rows
 
 
-def print_table(data, formatting=None, file=sys.stdout):  # pragma: no cover
+def print_table(data, formatting=None, file=sys.stdout):
     print('\n'.join(format_table(data, formatting,)), file=file)
 
 
