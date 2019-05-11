@@ -7,7 +7,7 @@ from precept import spinner
 async def test_spinner(capsys):
     messages = ['one', 'two', 'three', 'four', 'five', 'six']
 
-    ns = {
+    namespace = {
         'i': 0
     }
 
@@ -18,12 +18,12 @@ async def test_spinner(capsys):
             # First one is always empty. (Possible bugs?)
             return False
         clean_err = err.strip()
-        assert messages[ns['i']] in clean_err
-        ns['i'] += 1
+        assert messages[namespace['i']] in clean_err
+        namespace['i'] += 1
 
-        return ns['i'] >= len(messages)
+        return namespace['i'] >= len(messages)
 
     await spinner(
         on_spin,
-        message=lambda: f'{messages[ns["i"]]} ... '
+        message=lambda: f'{messages[namespace["i"]]} ... '
     )
