@@ -106,5 +106,5 @@ def test_command_docstring(capsys, monkeypatch):
 
     cli.start('--help'.split(' '))
 
-    out, err = capsys.readouterr()
+    out, _ = capsys.readouterr()
     assert 'Help from docstring' in out

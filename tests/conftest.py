@@ -1,8 +1,9 @@
-import pytest
 import asyncio
+import pytest
 
 
 # noinspection PyProtectedMember
+# pylint: disable=inconsistent-return-statements
 @pytest.mark.tryfirst
 def pytest_pyfunc_call(pyfuncitem):
     """Run tests marked as async in the loop."""
