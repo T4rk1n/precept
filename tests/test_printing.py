@@ -1,6 +1,6 @@
 import pytest
 
-from precept import spinner
+from precept import spinner, print_table
 
 
 @pytest.mark.async_test
@@ -27,3 +27,16 @@ async def test_spinner(capsys):
         on_spin,
         message=lambda: f'{messages[namespace["i"]]} ... '
     )
+
+
+def test_table(capsys):
+    table = [
+        'one', 'two', 'three', 'four', 'five', 'six',
+        'seven', 'eight', 'nine', 'ten', 'eleven'
+    ]
+    print_table(table)
+
+    out, _ = capsys.readouterr()
+    splitted = out.split('\n')
+    for line in enumerate(splitted):
+        assert len(line) < 79
