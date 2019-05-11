@@ -40,6 +40,24 @@ class SimpleCli(Precept):
         else:
             self.logger.info(message)
 
+    @Command(
+        Argument('--nested')
+    )
+    class Nested:
+        nested = None
+        plain_result = None
+        nest_much = None
+
+        @Command(
+            Argument('much')
+        )
+        async def nest(self, much):
+            self.nest_much = f'{self.nested}-{much}'
+
+        @Command()
+        async def plain(self):
+            self.plain_result = 'plain foo'
+
 
 def test_simple_cli():
     cli = SimpleCli()
@@ -108,3 +126,15 @@ def test_command_docstring(capsys, monkeypatch):
 
     out, _ = capsys.readouterr()
     assert 'Help from docstring' in out
+
+
+def test_nested_command():
+    cli = SimpleCli()
+
+    cli.start('nested --nested=foo nest bar'.split(' '))
+
+    assert cli.Nested.nest_much == 'foo-bar'
+
+    cli.start('nested plain'.split(' '))
+
+    assert cli.Nested.plain_result == 'plain foo'
