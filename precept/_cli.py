@@ -1,6 +1,7 @@
 """Class based cli builder with sub commands."""
 import argparse
 import asyncio
+import itertools
 import logging
 import os
 import typing
@@ -100,6 +101,10 @@ class Argument(ImmutableDict):
 
         parser.add_argument(*flags, **options)
 
+    @property
+    def flag_key(self):
+        return _flags_key(self.flags)
+
 
 class CombinedFormatter(argparse.ArgumentDefaultsHelpFormatter,
                         argparse.RawDescriptionHelpFormatter):
@@ -124,16 +129,28 @@ class Command:
         self.command_name = name
         self.description = description
         self.help = help
+        self._wrapped = None
+        self.obj_name = None
 
-    def __call__(self, func):
+    def __call__(self, obj):
+        self.obj_name = getattr(obj, '__name__')
         if not self.command_name:
-            self.command_name = getattr(func, '__name__')
+            self.command_name = self.obj_name
 
         if not self.description:
-            self.description = getattr(func, '__doc__', '')
-        setattr(func, '__command__', self)
+            self.description = getattr(obj, '__doc__', '')
 
-        return func
+        if isinstance(obj, type):
+
+            # pylint: disable=used-before-assignment
+            class NewCommand(obj, CommandClass, metaclass=CommandMeta):
+                command = self
+
+            self._wrapped = NewCommand()
+        else:
+            self._wrapped = CommandFunction(obj, self)
+
+        return self._wrapped
 
     def register(self, subparsers):
         parser = subparsers.add_parser(
@@ -142,7 +159,15 @@ class Command:
             help=self.help or self.description,
             formatter_class=CombinedFormatter
         )
-
+        if isinstance(self._wrapped, CommandClass):
+            subs = parser.add_subparsers(
+                title='Commands', dest='command'
+            )
+            # noinspection PyProtectedMember
+            for command_name, command, _ in self._wrapped.get_commands():
+                # get_commands return itself so make sure it's not the same.
+                if command_name != self.command_name:
+                    command.register(subs)
         for arg in self.arguments:
             arg.register(parser)
 
@@ -153,6 +178,101 @@ class Command:
     @command_name.setter
     def command_name(self, value):
         self._command_name = stringcase.spinalcase(value) if value else value
+
+    def __hash__(self):
+        return self.command_name
+
+
+class WrappedCommand:
+    command: Command
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__} "{self.command.command_name}">'
+
+    def get_commands(self) -> typing.Tuple[str, Command, typing.Callable]:
+        raise NotImplementedError
+
+
+class CommandFunction(WrappedCommand):
+    def __init__(self, func, command):
+        self.command = command
+        self.func = functools.wraps(self)(func)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def __get__(self, instance, owner):
+        # Allow to use the self of the class
+        if instance is None:
+            return self
+        return functools.partial(self.__call__, instance)
+
+    def get_commands(self):
+        return [(self.command.command_name, self.command, self)]
+
+    def set_func(self, func):
+        self.func = func
+
+
+class CommandClass(WrappedCommand):
+    _commands: typing.List[str]
+
+    def __call__(self, command, *args, **kwargs):
+        return getattr(self, command)(*args, **kwargs)
+
+    def get_commands(self):
+        c = []
+        for command in (getattr(self.__class__, x) for x in self._commands):
+            if issubclass(command.__class__, CommandClass):
+                # Recursively get all the commands.
+                c += command.get_commands()
+            else:
+                # Get the true one.
+                c.append((
+                    command.command.command_name,
+                    command.command,
+                    self.clean_arguments(
+                        getattr(self, command.command.obj_name))
+                ))
+
+        # noinspection PyTypeChecker
+        return c + [(self.command.command_name, self.command, self)]
+
+    def clean_arguments(self, func):
+
+        @functools.wraps(func)
+        def wrap_arguments(*args, **kwargs):
+            to_clean = []
+
+            for argument in self.command.arguments:
+                key = argument.flag_key
+                value = kwargs.get(key)
+                setattr(self, key, value)
+                to_clean.append(key)
+
+            cleaned = {k: v for k, v in kwargs.items() if k not in to_clean}
+            return func(*args, **cleaned)
+
+        return wrap_arguments
+
+
+class CommandMeta(type):
+    def __new__(mcs, name, bases, attributes):
+        new_attributes = dict(**attributes)
+        commands = []
+
+        for k, v in itertools.chain(*(
+                z.items() for z in [y.__dict__ for y in bases] + [attributes]
+        )):
+            if isinstance(v, WrappedCommand):
+                commands.append(k)
+            if isinstance(v, CommandClass):
+                # The ast get to nested's first so this can work.
+                commands += v._commands
+
+        new_attributes['_commands'] = commands
+
+        return type.__new__(mcs, name, bases, new_attributes)
 
 
 class Cli:
@@ -179,16 +299,15 @@ class Cli:
         for g in self._global_arguments:
             g.register(self.parser)
 
-        self.commands = {
-            x.__command__.command_name: x for x in commands
-        }
+        self.commands = {}
 
         subparsers = self.parser.add_subparsers(
             title='Commands', dest='command'
         )
 
-        for c in commands:
-            c.__command__.register(subparsers)
+        for command_name, command, wrapper in commands:
+            command.register(subparsers)
+            self.commands[command_name] = wrapper
 
     async def run(self, args=None):
         """
@@ -227,15 +346,9 @@ class ConfigProp:
         return g or c
 
 
-class PreceptMeta(type):
+class PreceptMeta(CommandMeta):
     def __new__(mcs, name, bases, attributes):
-        # TODO evaluate if the wrapped command is a class or a function.
-        #  Class will be a nested command subparser.
         new_attributes = dict(**attributes)
-        new_attributes['_commands'] = [
-            x.__name__
-            for x in attributes.values() if hasattr(x, '__command__')
-        ]
         prog_name = attributes.get('_prog_name')
         new_attributes['_prog_name'] = prog_name or stringcase.spinalcase(name)
 
@@ -250,9 +363,8 @@ class PreceptMeta(type):
         for x in default_configs.union(flags):
             new_attributes[f'config_{x}'] = ConfigProp()
 
-        # TODO add a `__call__` method, used to set the cli in `setup.py`
-
-        return type.__new__(mcs, name, bases, new_attributes)
+        # pylint: disable=too-many-function-args
+        return CommandMeta.__new__(mcs, name, bases, new_attributes)
 
 
 class Precept(metaclass=PreceptMeta):
@@ -268,7 +380,7 @@ class Precept(metaclass=PreceptMeta):
     If a key is in both `global_arguments` and `configs`, it gets a property
     with key `config_{key}` that get the global first.
     """
-    _commands = ()
+    _commands = []
     prog_name = ''
     global_arguments = []
     default_configs: dict = {}
@@ -322,7 +434,14 @@ class Precept(metaclass=PreceptMeta):
                 )
             )
 
-        commands = [getattr(self, x) for x in self._commands]
+        attributes = dir(self)
+        commands = list(
+            itertools.chain(*(
+                # Don't go into descriptors yet, class members gets the
+                getattr(self.__class__, x).get_commands()
+                for x in self._commands if x in attributes
+            ))
+        )
 
         if add_dump_config_command:
             @Command(
@@ -341,10 +460,22 @@ class Precept(metaclass=PreceptMeta):
                 await self.executor.execute_with_lock(
                     self._write_configs, self.configs, outfile
                 )
-            commands.append(dump_configs)
+            commands.append((
+                dump_configs.command.command_name,
+                dump_configs.command,
+                dump_configs
+            ))
 
         self.cli = Cli(
-            *commands,
+            *[
+                (
+                    x[0],
+                    x[1],
+                    # Now go into the descriptors for that self argument.
+                    getattr(self, x[1].obj_name)
+                    if x[1].obj_name in attributes else x[2]
+                ) for x in commands
+            ],
             prog=self.prog_name,
             description=str(self.__doc__),
             global_arguments=common_g_arguments + self.global_arguments,
