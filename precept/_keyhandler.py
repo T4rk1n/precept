@@ -173,6 +173,8 @@ class KeyHandler:
         for k, v in self.handlers.items():
             doc = getattr(v, '__doc__', getattr(v, '__name__', ''))
             clean_key = Keys.get_key(k, k)
+            if k == Keys.CTRL_C:
+                continue
             print(f'{clean_key}: {doc}', file=file)
 
 
