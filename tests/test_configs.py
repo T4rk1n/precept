@@ -1,18 +1,20 @@
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from ruamel import yaml
 
-from precept import Precept, Command, Argument
-
+from precept import (
+    Precept, Command, Argument, Config, ConfigProperty, Nestable, ConfigFormat
+)
 
 override_configs = {
-    'config_num': 25,
+    'config_int': 25,
     'config_str': 'bar',
     'config_list': [5, 4, 5],
     'config_nested': {
-        'nested': 'foo',
+        'nested_str': 'foo',
     }
 }
 
@@ -21,13 +23,48 @@ config_files = [
 ]
 
 
+class ConfigTest(Config):
+    config_str = ConfigProperty(comment='comment_string', config_type=str)
+    config_str_with_default = ConfigProperty(default='Default foo bar')
+    config_int = ConfigProperty(default=10)
+    config_float = ConfigProperty(default=89.99, comment='comment_float')
+    config_list = ConfigProperty(default=[1, 2, 3])
+
+    class ConfigNested(Nestable):
+        """docstring_comment"""
+        nested_str = ConfigProperty(
+            default='nested',
+            comment='nested_comment'
+        )
+
+        class DoubleNested(Nestable):
+            """doubly"""
+            double = ConfigProperty(
+                default=2.2, comment='double_comment_nested'
+            )
+
+        double_nested: DoubleNested = None
+
+    config_nested: ConfigNested = None
+
+
+override = {
+    'config_str': 'foo',
+    'config_str_with_default': 'not default',
+    'config_nested': {
+        'nested_str': 'hello',
+        'double_nested': {'double': 77.77}
+    }
+}
+
+
 class ConfigCli(Precept):
     default_configs = {
-        'config_num': 1,
+        'config_int': 1,
         'config_str': 'foo',
         'config_list': [1, 2, 3],
         'config_nested': {
-            'nested': 'bar',
+            'nested_str': 'bar',
         }
     }
     result = None
@@ -141,3 +178,66 @@ def test_multi_configs(level):
     finally:
         if os.path.exists(config_file):
             os.remove(config_file)
+
+
+def test_config_class():
+    cfg = ConfigTest()
+
+    # Default values assertions
+    assert cfg.config_str_with_default == 'Default foo bar'
+    assert cfg.config_nested.nested_str == 'nested'
+    assert cfg.config_nested.double_nested.double == 2.2
+    assert cfg.config_str is None
+    assert cfg.config_list == [1, 2, 3]
+
+    cfg.read_dict(override)
+
+    # Changed values assertions
+    assert cfg.config_str == 'foo'
+    assert cfg.config_nested.nested_str == 'hello'
+    assert cfg['config_nested']['nested_str'] == 'hello'
+    assert cfg.config_nested['nested_str'] == 'hello'
+    assert cfg.config_str_with_default == 'not default'
+    assert cfg.config_nested.double_nested.double == 77.77
+
+
+@pytest.mark.parametrize('config_format', [ConfigFormat.YML, ConfigFormat.INI])
+def test_config_comments(tmp_path, config_format):
+    cfg = ConfigTest(config_format=config_format)
+
+    config_file = os.path.join(tmp_path, 'configs')
+
+    cfg.read_dict(override)
+
+    cfg.save(config_file)
+
+    cfg2 = ConfigTest(config_format=config_format)
+    cfg2.read_file(config_file)
+
+    # Test that the comment are not included in the values
+    assert cfg2.config_str == 'foo'
+    assert cfg2.config_float == 89.99
+    assert cfg2.config_nested.nested_str == 'hello'
+    assert cfg2.config_nested.double_nested.double == 77.77
+
+    with open(config_file) as f:
+        test = f.read()
+
+    for comment in (
+            'comment_string', 'comment_float', 'docstring_comment',
+            'nested_comment', 'double_comment_nested', 'doubly'
+    ):
+        assert comment in test
+
+
+def test_config_json(tmp_path):
+    cfg = ConfigTest(config_format=ConfigFormat.JSON)
+    config_file = os.path.join(tmp_path, 'config.json')
+
+    cfg.save(config_file)
+
+    with open(config_file) as f:
+        data = json.load(f)
+
+    assert data['config_nested']['nested_str'] == 'nested'
+
