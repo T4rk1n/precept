@@ -28,7 +28,7 @@ class AsyncExecutor:
         elif is_windows():  # pragma: no cover
             # Processes don't work good with windows.
             self.executor = ThreadPoolExecutor()
-        else:
+        else:  # pragma: no cover
             self.executor = ProcessPoolExecutor()
 
     async def execute(self, func, *args, **kwargs):

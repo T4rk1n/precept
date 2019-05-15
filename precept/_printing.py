@@ -42,7 +42,7 @@ async def spinner(condition,
             p = '\\'
         if callable(message):
             msg = message()
-        else:
+        else:  # pragma: no cover
             msg = message
         m = colorize(f'{msg} {p}', fg=fg, bg=bg)
         msg = f'\r\x1b[K{m}'

@@ -5,7 +5,7 @@ from precept import spinner, print_table
 
 @pytest.mark.async_test
 async def test_spinner(capsys):
-    messages = ['one', 'two', 'three', 'four', 'five', 'six']
+    messages = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
 
     namespace = {
         'i': 0,
