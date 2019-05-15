@@ -7,7 +7,7 @@ from itertools import chain
 from ._tools import is_windows
 
 
-class Key:
+class Key:  # pragma: no cover
     def __init__(self, value, clean=None):
         self.value = value
         self.clean = clean
@@ -29,7 +29,7 @@ class Key:
         return f"<Key '{self.clean or self.value}'>"
 
 
-class Keys:
+class Keys:  # pragma: no cover
     SPACE = Key(' ', 'space')
     BACKSPACE = Key('\x7f', 'backspace')
     ENTER = Key('\r', 'enter')
@@ -122,7 +122,7 @@ class GetChar:
 getch = GetChar()
 
 
-class KeyHandler:
+class KeyHandler:  # pragma: no cover
     def __init__(self, handlers, loop=None, default_handler=None):  # pragma: no cover # noqa: E501
         self.handlers = handlers
         self.handlers.update({

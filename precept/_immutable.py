@@ -19,11 +19,6 @@ class ImmutableProp:
         # noinspection PyProtectedMember
         return instance._data.get(self.name)
 
-    def __set__(self, instance, value):
-        raise TypeError(
-            f'{instance.__class__.__name__}.{self.name} is immutable'
-        )
-
 
 class ImmutableMeta(abc.ABCMeta):
     # pylint: disable=arguments-differ
@@ -63,10 +58,10 @@ class ImmutableDict(collections.abc.Mapping, metaclass=ImmutableMeta):
         for k in self._data:
             yield k
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return str(dict(self))
 
-    def __repr__(self):
+    def __repr__(self):   # pragma: no cover
         return str(self)
 
     def __getattribute__(self, item):

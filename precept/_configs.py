@@ -251,6 +251,7 @@ class ConfigMeta(abc.ABCMeta):
         _new['_children'] = _children
         _new['_props'] = _props
 
+        # pylint: disable=too-many-function-args
         return abc.ABCMeta.__new__(mcs, name, bases, _new)
 
 

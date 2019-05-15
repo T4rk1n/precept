@@ -21,7 +21,7 @@ def is_windows():
 def format_table(data, formatting=None):
     # 2 padding + '|'
     max_len = max(len(x) for x in data) + 3
-    if max_len % 2 == 0:
+    if max_len % 2 == 0:  # pragma: no cover
         # Revert uneven for a bit nicer look.
         max_len += 1
     min_len = len(data) * max_len
@@ -29,10 +29,10 @@ def format_table(data, formatting=None):
 
     if r - int(r) > 0:
         col = int(r) - 1
-    else:
+    else:  # pragma: no cover
         col = int(r)
 
-    if min_len < 79:
+    if min_len < 79:  # pragma: no cover
         row_len = min_len + len(data) + 1
     else:
         row_len = max_len * col
