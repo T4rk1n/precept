@@ -5,13 +5,10 @@ import json
 import os
 import typing
 import configparser
+from enum import Enum, auto
 
 import stringcase
 from ruamel import yaml
-
-
-from enum import Enum, auto
-
 from ruamel.yaml.comments import CommentedMap
 
 
@@ -142,6 +139,7 @@ class IniConfigSerializer(BaseConfigSerializer):
 class AutoName(Enum):
 
     # noinspection PyMethodParameters
+    # pylint: disable=no-self-argument, unused-argument, no-member
     def _generate_next_value_(name, *args):
         return name.lower()
 
@@ -197,6 +195,7 @@ class ConfigProperty:
 
 
 class ConfigMeta(abc.ABCMeta):
+    # pylint: disable=arguments-differ
     def __new__(mcs, name, bases, attributes):
         _new = attributes.copy()
         _props = list(itertools.chain(*(
@@ -331,4 +330,3 @@ class Config(Nestable):
 
     def save(self, path: str):
         self._serializer.dump(self, path)
-

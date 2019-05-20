@@ -196,6 +196,7 @@ def test_config_class():
     assert cfg.config_str == 'foo'
     assert cfg.config_nested.nested_str == 'hello'
     assert cfg['config_nested']['nested_str'] == 'hello'
+    # pylint: disable=unsubscriptable-object
     assert cfg.config_nested['nested_str'] == 'hello'
     assert cfg.config_str_with_default == 'not default'
     assert cfg.config_nested.double_nested.double == 77.77
@@ -240,4 +241,3 @@ def test_config_json(tmp_path):
         data = json.load(f)
 
     assert data['config_nested']['nested_str'] == 'nested'
-
