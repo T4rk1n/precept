@@ -1,0 +1,334 @@
+import collections
+import abc
+import itertools
+import json
+import os
+import typing
+import configparser
+
+import stringcase
+from ruamel import yaml
+
+
+from enum import Enum, auto
+
+from ruamel.yaml.comments import CommentedMap
+
+
+def get_deep(data, *keys, default=None):
+    value = data
+    found = False
+    keys = iter(keys)
+    junk = object()
+
+    while not found:
+        try:
+            key = next(keys)
+            value = value.get(key, junk)
+            if value is junk:
+                return default, False
+        except StopIteration:
+            return value, True
+
+    return value, found
+
+
+def _to_yaml(root: CommentedMap, obj):
+    if isinstance(obj, Nestable):
+        data = CommentedMap()
+        for i, prop in enumerate(
+                getattr(type(obj), x) for x in getattr(obj, '_props', [])
+        ):
+            root.insert(
+                i, prop.name, _to_yaml(data, getattr(obj, prop.name)),
+                comment=prop.comment
+            )
+        return root
+    return obj
+
+
+def _to_dict(obj):
+    if isinstance(obj, Nestable):
+        data = {}
+        for k, v in obj.items():
+            data[k] = _to_dict(v)
+        return data
+    return obj
+
+
+class BaseConfigSerializer:
+
+    def dump(self, configs, path):
+        raise NotImplementedError
+
+    def load(self, path):
+        raise NotImplementedError
+
+
+class YamlConfigSerializer(BaseConfigSerializer):
+    def dump(self, configs, path):
+        ya_data: CommentedMap = CommentedMap()
+        ya_data = _to_yaml(ya_data, configs)
+
+        with open(path, 'w') as f:
+            yaml.dump(ya_data, f, Dumper=yaml.RoundTripDumper)
+
+    def load(self, path):
+        with open(path, 'r') as f:
+            return yaml.load(f, Loader=yaml.RoundTripLoader)
+
+
+class JsonConfigSerializer(BaseConfigSerializer):
+    def dump(self, configs, path):
+        with open(path, 'w') as f:
+            json.dump(_to_dict(configs), f)
+
+    def load(self, path):
+        with open(path, 'r') as f:
+            return json.load(f)
+
+
+class IniConfigSerializer(BaseConfigSerializer):
+    def __init__(self, root_name):
+        self.root_name = root_name
+
+    def dump(self, configs, path):
+        cfg = configparser.ConfigParser(allow_no_value=True)
+        leftovers = []
+        for p, value, prop in configs.get_prop_paths():
+            if '.' in p:
+                top = '.'.join(p.split('.')[:-1])
+            else:
+                top = self.root_name
+
+            cfg.setdefault(top, {})
+
+            if isinstance(value, Nestable):
+                # Put it before the first value
+                if prop.comment:
+                    leftovers = prop.comment.split(os.linesep)
+                continue
+
+            if prop.comment:
+                for c in itertools.chain(*[leftovers, prop.comment.split(os.linesep)]):
+                    cfg.set(top, f'# {c}', None)
+                leftovers = []
+
+            cfg[top][prop.name] = str(value)
+
+        with open(path, 'w') as f:
+            cfg.write(f)
+
+    def load(self, path):
+        cfg = configparser.ConfigParser()
+        with open(path) as f:
+            cfg.read_file(f)
+
+        raw = dict(cfg._sections)
+        data = raw.pop(self.root_name)
+        for k, v in raw.items():
+            # The rest are Nestables.
+            sections = k.split('.')
+            key = sections[-1]
+            last_section = data
+            for section in sections[:-1]:
+                last_section = last_section.setdefault(section, {})
+
+            last_section[key] = v
+
+        return data
+
+
+class AutoName(Enum):
+
+    # noinspection PyMethodParameters
+    def _generate_next_value_(name, *args):
+        return name.lower()
+
+
+class ConfigFormat(AutoName):
+    YML = auto()
+    JSON = auto()
+    INI = auto()
+
+    def serializer(self, config):
+        if self == ConfigFormat.YML:
+            return YamlConfigSerializer()
+        if self == ConfigFormat.JSON:
+            return JsonConfigSerializer()
+        if self == ConfigFormat.INI:
+            return IniConfigSerializer(config.root_name)
+        raise Exception('Invalid config format')
+
+
+class ConfigProperty:
+    def __init__(self, default=None, comment=None, config_type=None):
+        self.default = default
+        self.comment = comment
+        self.name = None
+        self.qualified_name = None
+        self.config_type = config_type or type(default) if default else None
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        if not issubclass(owner, Config):
+            self.qualified_name = f'{owner.__name__}.{name}'
+        else:
+            self.qualified_name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        # noinspection PyProtectedMember
+        if issubclass(owner, Config):
+            value = instance.get(self.name, self.default)
+        else:
+            root, levels = instance.get_root(self.name)
+            value, found = get_deep(root, *levels)
+            if not found:
+                value = self.default
+        if value is not None and self.config_type is not None:
+            value = self.config_type(value)
+        return value
+
+    def __set__(self, instance, value):
+        # noinspection PyProtectedMember
+        instance._config_data[self.qualified_name] = value
+
+
+class ConfigMeta(abc.ABCMeta):
+    def __new__(mcs, name, bases, attributes):
+        _new = attributes.copy()
+        _props = list(itertools.chain(*(
+            getattr(b, '_props', []) for b in bases
+        )))
+        _children = list(itertools.chain(*(
+            getattr(b, '_children', []) for b in bases
+        )))
+
+        for k, v in attributes.items():
+            if isinstance(v, ConfigProperty):
+                _props.append(k)
+            elif isinstance(v, type) and hasattr(v, '_props'):
+                # No way to check if actually a Nestable (chicken or egg?)
+                # Adding a Nested class as subclass would mean to have
+                # to loop over the attributes of the class and do it
+                # recursively. So it needs to be a Nestable otherwise
+                # the descriptor will trow because no get_root.
+                _key = stringcase.snakecase(k)
+                setattr(v, '_key', _key)
+                _new[_key] = _NestableDescriptor(
+                    f'_{_key}', getattr(v, '_props'), v, comment=v.__doc__
+                )
+                _children.append(v)
+                _props.append(_key)
+
+        _new['_children'] = _children
+        _new['_props'] = _props
+
+        return abc.ABCMeta.__new__(mcs, name, bases, _new)
+
+
+class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
+    _parent: typing.Any
+    _key: str
+    _children = []
+    _props = []
+
+    def __init__(self, parent=None, parent_len=0):
+        self._parent = parent
+        self._parent_len = parent_len
+        for child_cls in self._children:
+            # noinspection PyProtectedMember
+            var_name = child_cls._key
+            setattr(
+                self,
+                var_name,
+                child_cls(self, parent_len + 1)
+            )
+
+    def get_root(self, current=None):
+        parent = self._parent
+        levels = [current, self._key] if current else [self._key]
+        last_parent = parent
+        while parent is not None:
+            key = getattr(parent, '_key', None)
+            if key is not None:
+                levels.append(key)
+            last_parent = parent
+            parent = getattr(parent, '_parent', None)
+        return last_parent, reversed(levels)
+
+    def __getitem__(self, k):
+        # Just go into descriptor.
+        return getattr(self, k)
+
+    def __len__(self):
+        return len(self._props)
+
+    def __iter__(self):
+        for prop in self._props:
+            yield prop
+
+    def get_prop_paths(self, parent=''):
+        children = [getattr(x, '_key') for x in self._children]
+        if not parent and hasattr(self, '_key'):
+            parent = self._key
+        for prop in (getattr(type(self), x) for x in self._props):
+            value = getattr(self, prop.name)
+            path = f'{parent + "." if parent else ""}{prop.name}'
+            yield path, value, prop
+            if prop.name in children:
+                for k, v, p in value.get_prop_paths(path):
+                    yield k, v, p
+
+
+class _NestableDescriptor(ConfigProperty):
+
+    def __init__(self, nestable, props, nested_cls, comment=None):
+        default = {
+            prop.name: prop.default
+            for prop in (getattr(nested_cls, p) for p in props)
+        }
+        super().__init__(default, comment, config_type=dict)
+        self.nestable = nestable
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return instance.__dict__.get(self.nestable, self.default)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.nestable, value)
+
+
+class Config(Nestable):
+    """
+    Root config class, assign ConfigProperties as class members.
+    """
+
+    def __init__(
+            self,
+            config_format: ConfigFormat = ConfigFormat.YML,
+            root_name='CONFIG'
+    ):
+        super().__init__(None)
+        self._data = {}
+        self.config_format = config_format
+        self.root_name = root_name
+        self._serializer: BaseConfigSerializer = config_format.serializer(self)
+
+    def __getitem__(self, k):
+        # Here get the prop descriptor and return the value or default
+        prop = getattr(type(self), k)
+        return self._data.get(k, prop.default)
+
+    def read_dict(self, data: dict):
+        self._data = data
+
+    def read_file(self, path: str):
+        self._data = self._serializer.load(path)
+
+    def save(self, path: str):
+        self._serializer.dump(self, path)
+
