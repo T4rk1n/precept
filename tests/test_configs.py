@@ -49,8 +49,11 @@ class ConfigTest(Config):
 
 
 override = {
+    'config_int': 22,
     'config_str': 'foo',
+    'config_float': 55.77,
     'config_str_with_default': 'not default',
+    'config_list': [5, 4, 5],
     'config_nested': {
         'nested_str': 'hello',
         'double_nested': {'double': 77.77}
@@ -217,9 +220,10 @@ def test_config_comments(tmp_path, config_format):
 
     # Test that the comment are not included in the values
     assert cfg2.config_str == 'foo'
-    assert cfg2.config_float == 89.99
+    assert cfg2.config_float == 55.77
     assert cfg2.config_nested.nested_str == 'hello'
     assert cfg2.config_nested.double_nested.double == 77.77
+    assert cfg2.config_list == [5, 4, 5]
 
     with open(config_file) as f:
         test = f.read()
@@ -241,3 +245,20 @@ def test_config_json(tmp_path):
         data = json.load(f)
 
     assert data['config_nested']['nested_str'] == 'nested'
+
+
+@pytest.mark.parametrize(
+    'name, value', list(
+        x for x in override.items() if not isinstance(x[1], dict)
+    )
+)
+def test_config_environ(monkeypatch, name, value):
+    monkeypatch.setenv(
+        name.upper(),
+        str(value)
+        if not isinstance(value, list)
+        else yaml.round_trip_dump(value)
+    )
+    cfg = ConfigTest()
+
+    assert getattr(cfg, name) == value
