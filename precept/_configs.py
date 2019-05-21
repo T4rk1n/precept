@@ -11,18 +11,19 @@ import stringcase
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 
+undefined = object()
+
 
 def get_deep(data, *keys, default=None):
     value = data
     found = False
     keys = iter(keys)
-    junk = object()
 
     while not found:
         try:
             key = next(keys)
-            value = value.get(key, junk)
-            if value is junk:
+            value = value.get(key, undefined)
+            if value is undefined:
                 return default, False
         except StopIteration:
             return value, True
@@ -111,7 +112,10 @@ class IniConfigSerializer(BaseConfigSerializer):
                     cfg.set(top, f'# {c}', None)
                 leftovers = []
 
-            cfg[top][prop.name] = str(value)
+            if isinstance(value, list):
+                cfg[top][prop.name] = yaml.round_trip_dump(value)
+            else:
+                cfg[top][prop.name] = str(value)
 
         with open(path, 'w') as f:
             cfg.write(f)
@@ -160,12 +164,21 @@ class ConfigFormat(AutoName):
 
 
 class ConfigProperty:
-    def __init__(self, default=None, comment=None, config_type=None):
+    def __init__(
+            self,
+            default=None,
+            comment=None,
+            config_type=None,
+            environ_name=None,
+            auto_environ=True
+    ):
         self.default = default
         self.comment = comment
         self.name = None
         self.qualified_name = None
         self.config_type = config_type or type(default) if default else None
+        self.environ_name = environ_name
+        self.auto_environ = auto_environ
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -174,24 +187,36 @@ class ConfigProperty:
         else:
             self.qualified_name = name
 
+        if self.environ_name is None and self.auto_environ:
+            self.environ_name = name.upper()
+
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        # noinspection PyProtectedMember
-        if issubclass(owner, Config):
-            value = instance.get(self.name, self.default)
+        if self.environ_name:
+            value = os.getenv(self.environ_name, undefined)
         else:
-            root, levels = instance.get_root(self.name)
-            value, found = get_deep(root, *levels)
-            if not found:
-                value = self.default
+            value = undefined
+
+        if value is undefined:
+            if issubclass(owner, Config):
+                value = instance.get(self.name, self.default)
+            else:
+                root, levels = instance.get_root(self.name)
+                value, found = get_deep(root, *levels)
+                if not found:
+                    value = self.default
+
         if value is not None and self.config_type is not None:
-            value = self.config_type(value)
+            if isinstance(value, str) and self.config_type == list:
+                value = yaml.round_trip_load(value)
+            else:
+                value = self.config_type(value)
         return value
 
     def __set__(self, instance, value):
         # noinspection PyProtectedMember
-        instance._config_data[self.qualified_name] = value
+        instance._config_data[self.name] = value
 
 
 class ConfigMeta(abc.ABCMeta):
