@@ -108,7 +108,9 @@ class IniConfigSerializer(BaseConfigSerializer):
                 continue
 
             if prop.comment:
-                for c in itertools.chain(*[leftovers, prop.comment.split(os.linesep)]):
+                for c in itertools.chain(*[
+                    leftovers, prop.comment.split(os.linesep)
+                ]):
                     cfg.set(top, f'# {c}', None)
                 leftovers = []
 
@@ -125,6 +127,7 @@ class IniConfigSerializer(BaseConfigSerializer):
         with open(path) as f:
             cfg.read_file(f)
 
+        # noinspection PyProtectedMember
         raw = dict(cfg._sections)
         data = raw.pop(self.root_name)
         for k, v in raw.items():
@@ -170,11 +173,12 @@ class ConfigProperty:
             comment=None,
             config_type=None,
             environ_name=None,
-            auto_environ=True
+            auto_environ=True,
+            name=None,
     ):
         self.default = default
         self.comment = comment
-        self.name = None
+        self.name = name
         self.qualified_name = None
         self.config_type = config_type or type(default) if default else None
         self.environ_name = environ_name
@@ -213,10 +217,6 @@ class ConfigProperty:
             else:
                 value = self.config_type(value)
         return value
-
-    def __set__(self, instance, value):
-        # noinspection PyProtectedMember
-        instance._config_data[self.name] = value
 
 
 class ConfigMeta(abc.ABCMeta):
@@ -316,6 +316,7 @@ class _NestableDescriptor(ConfigProperty):
         }
         super().__init__(default, comment, config_type=dict)
         self.nestable = nestable
+        self.name = nestable[1:]
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -355,3 +356,39 @@ class Config(Nestable):
 
     def save(self, path: str):
         self._serializer.dump(self, path)
+
+
+def config_factory(data, root=None, key=None):
+
+    props = []
+    children = []
+
+    class _Current:
+        pass
+
+    for k, v in data.items():
+        if isinstance(v, dict):
+            nestable = config_factory(v, _Current, k)
+            setattr(
+                _Current, k,
+                _NestableDescriptor(f'_{k}', list(v.keys()), nestable)
+            )
+            children.append(nestable)
+        else:
+            setattr(_Current, k,  ConfigProperty(name=k, default=v))
+        props.append(k)
+
+    setattr(_Current, '_props', props)
+    setattr(_Current, '_children', children)
+
+    if root is None:
+        class _Wrapped(_Current, Config):
+            pass
+    else:
+        setattr(_Current, '_key', key)
+
+        class _Wrapped(_Current, Nestable):
+            pass
+
+    return _Wrapped
+
