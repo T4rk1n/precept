@@ -6,8 +6,8 @@ import pytest
 from ruamel import yaml
 
 from precept import (
-    Precept, Command, Argument, Config, ConfigProperty, Nestable, ConfigFormat
-)
+    Precept, Command, Argument, Config, ConfigProperty, Nestable, ConfigFormat,
+    config_factory)
 
 override_configs = {
     'config_int': 25,
@@ -142,7 +142,7 @@ def test_dump_config_defaults():
         assert os.path.exists(config_file)
         with open(config_file, 'r') as f:
             configs = yaml.load(f, Loader=yaml.RoundTripLoader)
-        for k, v in Precept.default_configs.items():
+        for k, v in cli.default_configs.items():
             assert configs[k] == v
     finally:
         if os.path.exists(config_file):
@@ -262,3 +262,12 @@ def test_config_environ(monkeypatch, name, value):
     cfg = ConfigTest()
 
     assert getattr(cfg, name) == value
+
+
+def test_config_factory():
+    d = {'flat': 'face', 'nested': {'double': {'keyed': 'alright'}}}
+    cls = config_factory(d)
+    cfg = cls()
+
+    assert cfg.flat == 'face'
+    assert cfg.nested.double.keyed == 'alright'
