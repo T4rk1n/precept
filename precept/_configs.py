@@ -109,7 +109,7 @@ class IniConfigSerializer(BaseConfigSerializer):
 
             if prop.comment:
                 for c in itertools.chain(*[
-                    leftovers, prop.comment.split(os.linesep)
+                        leftovers, prop.comment.split(os.linesep)
                 ]):
                     cfg.set(top, f'# {c}', None)
                 leftovers = []
@@ -198,6 +198,7 @@ class ConfigProperty:
         if instance is None:
             return self
         if self.environ_name:
+            # pylint: disable=invalid-envvar-default
             value = os.getenv(self.environ_name, undefined)
         else:
             value = undefined
@@ -372,7 +373,7 @@ def config_factory(data, root=None, key=None):
             )
             children.append(nestable)
         else:
-            setattr(_Current, k,  ConfigProperty(name=k, default=v))
+            setattr(_Current, k, ConfigProperty(name=k, default=v))
         props.append(k)
 
     setattr(_Current, '_props', props)
@@ -388,4 +389,3 @@ def config_factory(data, root=None, key=None):
             pass
 
     return _Wrapped
-
