@@ -1,6 +1,7 @@
 import pytest
 
 from precept import ImmutableDict
+from precept.errors import ImmutableError
 
 
 def test_immutable_dict():
@@ -18,7 +19,7 @@ def test_immutable_dict():
         # pylint: disable=unused-variable
         d = data.dont_exist  # noqa: F841
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ImmutableError):
         # pylint: disable=attribute-defined-outside-init
         data.foo = 'not foo'
 
@@ -34,7 +35,7 @@ def test_immutable_props():
     assert first.keyword == 'keyword'
     assert len(first) == 3
 
-    with pytest.raises(TypeError) as context:
+    with pytest.raises(ImmutableError) as context:
         # pylint: disable=attribute-defined-outside-init
         first.foo = 'bar'
 

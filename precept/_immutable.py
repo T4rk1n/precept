@@ -4,6 +4,8 @@ import inspect
 import typing
 
 
+from .errors import ImmutableError
+
 __all__ = [
     'ImmutableProp',
     'ImmutableDict',
@@ -75,7 +77,7 @@ class ImmutableDict(collections.abc.Mapping, metaclass=ImmutableMeta):
 
     def __setattr__(self, key, value):
         if self.__dict__.get('_initialized'):
-            raise TypeError(
+            raise ImmutableError(
                 f'Property {self.__class__.__name__}.{key} is immutable'
             )
         super(ImmutableDict, self).__setattr__(key, value)

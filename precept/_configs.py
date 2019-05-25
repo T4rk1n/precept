@@ -11,6 +11,9 @@ import stringcase
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 
+from .errors import ConfigError
+
+
 undefined = object()
 
 
@@ -163,7 +166,7 @@ class ConfigFormat(AutoName):
             return JsonConfigSerializer()
         if self == ConfigFormat.INI:
             return IniConfigSerializer(config.root_name)
-        raise Exception('Invalid config format')  # pragma: no cover
+        raise ConfigError('Invalid config format')  # pragma: no cover
 
 
 class ConfigProperty:
@@ -213,10 +216,16 @@ class ConfigProperty:
                     value = self.default
 
         if value is not None and self.config_type is not None:
-            if isinstance(value, str) and self.config_type == list:
-                value = yaml.round_trip_load(value)
-            else:
-                value = self.config_type(value)
+            try:
+                if isinstance(value, str) and self.config_type == list:
+                    value = yaml.round_trip_load(value)
+                else:
+                    value = self.config_type(value)
+            except TypeError as err:
+                raise ConfigError(
+                    f'Expected type {self.config_type.__name__} for {value}'
+                ) from err
+
         return value
 
 
