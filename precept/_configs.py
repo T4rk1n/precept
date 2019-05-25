@@ -23,12 +23,12 @@ def get_deep(data, *keys, default=None):
         try:
             key = next(keys)
             value = value.get(key, undefined)
-            if value is undefined:
+            if value is undefined:  # pragma: no cover
                 return default, False
         except StopIteration:
             return value, True
 
-    return value, found
+    return value, found  # pragma: no cover
 
 
 def _to_yaml(root: CommentedMap, obj):
@@ -56,10 +56,10 @@ def _to_dict(obj):
 
 class BaseConfigSerializer:
 
-    def dump(self, configs, path):
+    def dump(self, configs, path):  # pragma: no cover
         raise NotImplementedError
 
-    def load(self, path):
+    def load(self, path):  # pragma: no cover
         raise NotImplementedError
 
 
@@ -81,7 +81,7 @@ class JsonConfigSerializer(BaseConfigSerializer):
         with open(path, 'w') as f:
             json.dump(_to_dict(configs), f)
 
-    def load(self, path):
+    def load(self, path):  # pragma: no cover
         with open(path, 'r') as f:
             return json.load(f)
 
@@ -163,7 +163,7 @@ class ConfigFormat(AutoName):
             return JsonConfigSerializer()
         if self == ConfigFormat.INI:
             return IniConfigSerializer(config.root_name)
-        raise Exception('Invalid config format')
+        raise Exception('Invalid config format')  # pragma: no cover
 
 
 class ConfigProperty:
@@ -208,7 +208,7 @@ class ConfigProperty:
             else:
                 root, levels = instance.get_root(self.name)
                 value, found = get_deep(root, *levels)
-                if not found:
+                if not found:  # pragma: no cover
                     value = self.default
 
         if value is not None and self.config_type is not None:
@@ -287,7 +287,7 @@ class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
         # Just go into descriptor.
         return getattr(self, k)
 
-    def __len__(self):
+    def __len__(self):  # pragma: no cover
         return len(self._props)
 
     def __iter__(self):
@@ -296,7 +296,7 @@ class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
 
     def get_prop_paths(self, parent=''):
         children = [getattr(x, '_key') for x in self._children]
-        if not parent and hasattr(self, '_key'):
+        if not parent and hasattr(self, '_key'):  # pragma: no cover
             parent = self._key
         for prop in (getattr(type(self), x) for x in self._props):
             value = getattr(self, prop.name)
@@ -322,9 +322,6 @@ class _NestableDescriptor(ConfigProperty):
         if instance is None:
             return self
         return instance.__dict__.get(self.nestable, self.default)
-
-    def __set__(self, instance, value):
-        setattr(instance, self.nestable, value)
 
 
 class Config(Nestable):

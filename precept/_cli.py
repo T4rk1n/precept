@@ -391,8 +391,6 @@ class Precept(metaclass=PreceptMeta):
             self._config_file = [config_file]
         self._user_configs = None
 
-        self._configs = None
-
         if is_windows():
             colorama.init()
 
@@ -481,29 +479,6 @@ class Precept(metaclass=PreceptMeta):
                 return config
         return ''
 
-    @property
-    def configs(self):
-        """
-        Configs dictionary of the application, set ``config_file`` argument
-        to use with the default configs.
-
-        :return:
-        """
-        warnings.warn(
-            DeprecationWarning(
-                'Old `configs` api - please migrate to `config`'
-            )
-        )
-        if self._configs:
-            # Cached
-            return self._configs
-        if self.config_path:
-            with open(self.config_path, 'r') as f:
-                configs = yaml.load(f, Loader=yaml.RoundTripLoader)
-            self._configs = ImmutableDict(**configs)
-            return self._configs
-        return ImmutableDict(**self.default_configs)
-
     def start(self, args=None):
         """
         Start the application loop.
@@ -542,9 +517,3 @@ class Precept(metaclass=PreceptMeta):
                 self.config.read_file(self.config_path)
 
         self.logger.info(f'{self.prog_name} {self.version}')
-
-    # noinspection PyMethodMayBeStatic
-    # pylint: disable=no-self-use
-    def _write_configs(self, configs, file):
-        with open(file, 'w') as f:
-            yaml.dump(dict(configs), f, Dumper=yaml.RoundTripDumper)
