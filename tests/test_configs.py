@@ -278,3 +278,17 @@ def test_config_factory():
 
     assert cfg.flat == 'face'
     assert cfg.nested.double.keyed == 'alright'
+
+
+@pytest.mark.parametrize(
+    'config_name, config_value', list(override.items())
+)
+def test_new_config_cli(config_name, config_value):
+    class Cfg(ConfigCli):
+        config_class = ConfigTest
+
+    cli = Cfg()
+    cli.config.read_dict(override)
+    cli.start(f'--quiet use-config {config_name}'.split(' '))
+
+    assert cli.result == config_value
