@@ -86,7 +86,7 @@ class ConfigCli(Precept):
         )
     )
     async def use_config(self, config_name):
-        self.result = self.configs.get(config_name)
+        self.result = self.config.get(config_name)
 
 
 @pytest.mark.parametrize(
@@ -106,7 +106,9 @@ def test_config_file(config_name, config_value):
     config_file = './config.yml'
     try:
         cli = ConfigCli()
-        cli._write_configs(override_configs, config_file)
+        cli.config.read_dict(override_configs)
+        cli.config.save(config_file)
+
         cli.start(f'--quiet use-config {config_name}'.split(' '))
 
         assert cli.result == config_value
@@ -122,7 +124,8 @@ def test_config_override(config_name, config_value):
     config_file = './custom.yml'
     try:
         cli = ConfigCli()
-        cli._write_configs(override_configs, config_file)
+        cli.config.read_dict(override_configs)
+        cli.config.save(config_file)
         cli.start(
             f'--quiet --config-file {config_file}'
             f' use-config {config_name}'.split(' ')
@@ -154,7 +157,9 @@ def test_dump_config_current_configs():
     output = './output.yml'
     try:
         cli = ConfigCli()
-        cli._write_configs(override_configs, config_file)
+        cli.config.read_dict(override_configs)
+        cli.config.save(config_file)
+
         cli.start(f'--quiet dump-configs {output}'.split(' '))
         with open(config_file, 'r') as f:
             configs = yaml.load(f, Loader=yaml.RoundTripLoader)
@@ -174,7 +179,9 @@ def test_multi_configs(level):
     config_file = config_files[level]
     try:
         cli = ConfigCli()
-        cli._write_configs(override_configs, config_file)
+        cli.config.read_dict(override_configs)
+        cli.config.save(config_file)
+
         for k, v in override_configs.items():
             cli.start(f'--quiet use-config {k}'.split(' '))
             assert cli.result == v
