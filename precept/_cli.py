@@ -6,6 +6,7 @@ import logging
 import os
 import typing
 import functools
+import warnings
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
@@ -13,6 +14,7 @@ import colorama
 import stringcase
 from ruamel import yaml
 
+from ._configs import Config, config_factory
 from ._immutable import ImmutableDict
 from ._tools import is_windows
 from ._logger import setup_logger
@@ -336,33 +338,11 @@ class Cli:
             self.parser.print_help()
 
 
-class ConfigProp:
-    def __set_name__(self, owner, name):
-        self.name = name  # pylint: disable=attribute-defined-outside-init
-
-    def __get__(self, instance, owner):
-        g = instance.cli.globals.get(self.name)  # From cli arg priority.
-        c = instance.configs.get(self.name)
-        return g or c
-
-
 class PreceptMeta(CommandMeta):
     def __new__(mcs, name, bases, attributes):
         new_attributes = dict(**attributes)
         prog_name = attributes.get('_prog_name')
         new_attributes['_prog_name'] = prog_name or stringcase.spinalcase(name)
-
-        default_configs = set(attributes.get('_default_configs', {}).keys())
-        flags = [
-            _flags_key(y.flags)
-            for y in attributes.get('_global_arguments', [])
-        ]
-
-        # TODO remove/refactor ConfigProp ?
-        #  Should get a special case of ImmutableDict.
-        for x in default_configs.union(flags):
-            new_attributes[f'config_{x}'] = ConfigProp()
-
         # pylint: disable=too-many-function-args
         return CommandMeta.__new__(mcs, name, bases, new_attributes)
 
@@ -385,6 +365,7 @@ class Precept(metaclass=PreceptMeta):
     global_arguments = []
     default_configs: dict = {}
     version = '0.0.1'
+    config_class = None
 
     def __init__(
             self,
@@ -434,6 +415,14 @@ class Precept(metaclass=PreceptMeta):
                 )
             )
 
+        if self.config_class:
+            self.config: Config = self.config_class()
+        elif self.default_configs:
+            cls = config_factory(self.default_configs)
+            self.config = cls()
+        else:
+            self.config = Config()
+
         attributes = dir(self)
         commands = list(
             itertools.chain(*(
@@ -457,9 +446,8 @@ class Precept(metaclass=PreceptMeta):
                 dirname = os.path.dirname(outfile)
                 if dirname:
                     os.makedirs(dirname, exist_ok=True)
-                await self.executor.execute_with_lock(
-                    self._write_configs, self.configs, outfile
-                )
+                self.config.save(outfile)
+
             commands.append((
                 dump_configs.command.command_name,
                 dump_configs.command,
@@ -501,6 +489,11 @@ class Precept(metaclass=PreceptMeta):
 
         :return:
         """
+        warnings.warn(
+            DeprecationWarning(
+                'Old `configs` api - please migrate to `config`'
+            )
+        )
         if self._configs:
             # Cached
             return self._configs
@@ -546,6 +539,7 @@ class Precept(metaclass=PreceptMeta):
 
             if self.config_path:
                 self.logger.info(f'Using config {self.config_path}')
+                self.config.read_file(self.config_path)
 
         self.logger.info(f'{self.prog_name} {self.version}')
 
