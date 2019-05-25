@@ -6,13 +6,11 @@ import logging
 import os
 import typing
 import functools
-import warnings
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 import colorama
 import stringcase
-from ruamel import yaml
 
 from ._configs import Config, config_factory
 from ._immutable import ImmutableDict
@@ -27,7 +25,7 @@ class AsyncExecutor:
         self.global_lock = asyncio.Lock(loop=loop)
         if executor:
             self.executor = executor
-        elif is_windows():
+        elif is_windows():  # pragma: no cover
             # Processes don't work good with windows.
             self.executor = ThreadPoolExecutor()
         else:
@@ -47,6 +45,7 @@ class AsyncExecutor:
             functools.partial(func, *args, **kwargs)
         )
 
+    # pragma: no cover
     async def execute_with_lock(self, func, *args, **kwargs):
         """
         Acquire lock before executing the function.
@@ -188,7 +187,7 @@ class Command:
 class WrappedCommand:
     command: Command
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return f'<{self.__class__.__name__} "{self.command.command_name}">'
 
     def get_commands(self) -> typing.Tuple[str, Command, typing.Callable]:
@@ -334,7 +333,7 @@ class Cli:
             await command(**kw)
         elif self.default_command:
             await self.default_command(**vars(namespace))
-        else:
+        else:  # pragma: no cover
             self.parser.print_help()
 
 
@@ -391,7 +390,7 @@ class Precept(metaclass=PreceptMeta):
             self._config_file = [config_file]
         self._user_configs = None
 
-        if is_windows():
+        if is_windows():  # pragma: no cover
             colorama.init()
 
         self.logger = setup_logger(self.prog_name)
