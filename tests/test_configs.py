@@ -271,6 +271,7 @@ def test_config_environ(monkeypatch, name, value):
     assert getattr(cfg, name) == value
 
 
+# pylint: disable=no-member
 def test_config_factory():
     d = {'flat': 'face', 'nested': {'double': {'keyed': 'alright'}}}
     cls = config_factory(d)

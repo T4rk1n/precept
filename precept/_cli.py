@@ -413,6 +413,7 @@ class Precept(metaclass=PreceptMeta):
             )
 
         if self.config_class:
+            # pylint: disable=not-callable
             self.config: Config = self.config_class()
         elif self.default_configs:
             cls = config_factory(self.default_configs)
