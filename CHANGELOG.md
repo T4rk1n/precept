@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.0]
+### Changed
+
+- :boom: Rename `CliApp` -> `Precept`.
+- :hocho: Removed old ConfigProp.
+- :hocho: Removed `Precept.configs`, now `Precept.config` with new config api.
+
+### Added
+
+- :sparkles: Command help from docstring.
+- :construction: Add help formatter argument.
+- :sparkles: Nested commands support, wrap a class into a `Command`.
+- :sparkles: Config class
+  - Comment support
+  - Ini/yaml/json format choices
+  - value from environ
+  - nestable config attribute lookup
+  - config factory.
+- :construction: Errors classes: `PreceptError`, `ConfigError`, `ImmutableError`
+  
 ## [0.1.1]
 ### Fixed
 
