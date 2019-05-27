@@ -286,7 +286,7 @@ def test_config_factory():
 )
 def test_new_config_cli(config_name, config_value):
     class Cfg(ConfigCli):
-        config_class = ConfigTest
+        config = ConfigTest()
 
     cli = Cfg()
     cli.config.read_dict(override)
