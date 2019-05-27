@@ -4,7 +4,7 @@ import sys
 
 from colorama import Back, Fore, Style
 
-from ._printing import colorize
+from .console import colorize
 
 _colors = {
     'levels': {

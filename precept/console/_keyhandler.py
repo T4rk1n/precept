@@ -4,7 +4,7 @@ import sys
 import threading
 from itertools import chain
 
-from ._tools import is_windows
+from precept._tools import is_windows
 
 
 class Key:  # pragma: no cover

@@ -1,6 +1,6 @@
 import pytest
 
-from precept import spinner, print_table
+from precept.console import print_table, spinner
 
 
 @pytest.mark.async_test
