@@ -69,6 +69,10 @@ class BaseConfigSerializer:
 class YamlConfigSerializer(BaseConfigSerializer):
     def dump(self, configs, path):
         ya_data: CommentedMap = CommentedMap()
+        root_comment = getattr(configs, '__doc__', None)
+        if root_comment:
+            ya_data.yaml_set_start_comment(root_comment)
+
         ya_data = _to_yaml(ya_data, configs)
 
         with open(path, 'w') as f:
