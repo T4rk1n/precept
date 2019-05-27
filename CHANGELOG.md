@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1]
+### Fixed
+
+- :hammer: Allow config instance to be set directly.
+- :hammer: Add root config class docstring as the first config comment.
+
 ## [0.2.0]
 ### Changed
 
