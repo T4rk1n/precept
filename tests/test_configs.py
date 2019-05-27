@@ -24,6 +24,7 @@ config_files = [
 
 
 class ConfigTest(Config):
+    """root_comment"""
     config_str = ConfigProperty(comment='comment_string', config_type=str)
     config_str_with_default = ConfigProperty(default='Default foo bar')
     config_int = ConfigProperty(default=10)
@@ -237,7 +238,7 @@ def test_config_comments(tmp_path, config_format):
 
     for comment in (
             'comment_string', 'comment_float', 'docstring_comment',
-            'nested_comment', 'double_comment_nested', 'doubly'
+            'nested_comment', 'double_comment_nested', 'doubly', 'root_comment'
     ):
         assert comment in test
 
