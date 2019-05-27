@@ -96,6 +96,13 @@ class IniConfigSerializer(BaseConfigSerializer):
     def dump(self, configs, path):
         cfg = configparser.ConfigParser(allow_no_value=True)
         leftovers = []
+
+        root_comment = getattr(configs, '__doc__', '')
+        if root_comment:
+            cfg.setdefault(self.root_name, {})
+            for comment in root_comment.split(os.linesep):
+                cfg.set(self.root_name, f'# {comment}', None)
+
         for p, value, prop in configs.get_prop_paths():
             if '.' in p:
                 top = '.'.join(p.split('.')[:-1])
