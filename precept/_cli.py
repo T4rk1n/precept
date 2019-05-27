@@ -365,6 +365,7 @@ class Precept(metaclass=PreceptMeta):
     default_configs: dict = {}
     version = '0.0.1'
     config_class = None
+    config: Config = None
 
     def __init__(
             self,
@@ -412,14 +413,15 @@ class Precept(metaclass=PreceptMeta):
                 )
             )
 
-        if self.config_class:
-            # pylint: disable=not-callable
-            self.config: Config = self.config_class()
-        elif self.default_configs:
-            cls = config_factory(self.default_configs)
-            self.config = cls()
-        else:
-            self.config = Config()
+        if self.config is None:
+            if self.config_class and self.config:
+                # pylint: disable=not-callable
+                self.config: Config = self.config_class()
+            elif self.default_configs:
+                cls = config_factory(self.default_configs)
+                self.config = cls()
+            else:
+                self.config = Config()
 
         attributes = dir(self)
         commands = list(
