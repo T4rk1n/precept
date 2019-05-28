@@ -21,35 +21,27 @@ def colorize(text, bg=None, fg=None, style=None):
     return f'{bg}{fg}{style}{text}{Style.RESET_ALL}'
 
 
+_spinner_symbols = (
+    '|', '/', '-', '\\', '|', '/', '-', '\\'
+)
+
+
 async def spinner(condition,
                   sleep_time=0.25, message='',
-                  fg=Fore.WHITE, bg=None):
+                  fg=Fore.WHITE, bg=None,
+                  symbols=_spinner_symbols):
     i = 0
+
+    num_symbols = len(symbols)
+
     while not condition():
-        m = i % 8
+        symbol = symbols[i % num_symbols]
         i += 1
-        p = ''
-        if m == 0:
-            p = '|'
-        elif m == 1:
-            p = '/'
-        elif m == 2:
-            p = '-'
-        elif m == 3:
-            p = '\\'
-        elif m == 4:
-            p = '|'
-        elif m == 5:
-            p = '/'
-        elif m == 6:
-            p = '-'
-        elif m == 7:
-            p = '\\'
         if callable(message):
             msg = message()
         else:  # pragma: no cover
             msg = message
-        m = colorize(f'{msg} {p}', fg=fg, bg=bg)
+        m = colorize(f'{msg} {symbol}', fg=fg, bg=bg)
         msg = f'\r\x1b[K{m}'
         print(msg, end='', flush=True, file=sys.stderr)
         await asyncio.sleep(sleep_time)
