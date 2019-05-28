@@ -1,5 +1,6 @@
 import asyncio
 import sys
+import math
 
 from colorama import Style, Fore
 
@@ -9,6 +10,7 @@ __all__ = [
     'format_table',
     'print_table',
     'goto_xy',
+    'progress_bar',
 ]
 
 
@@ -104,3 +106,34 @@ def print_table(data, formatting=None, file=sys.stdout):
 def goto_xy(stream, x, y):  # pragma: no cover
     # Make sure colorama is init on windows.
     print('%c[%d;%df' % (0x1B, y, x), end='', file=stream)
+
+
+async def progress_bar(
+        value_func, max_value,
+        value_formatter=None,
+        include_value=True,
+        dents=50,
+        sleep_time=0.005,
+        loop=None,
+        file=None,
+        full_symbol='#',
+        empty_symbol='-',
+        start_symbol='[',
+        end_symbol=']',
+):
+    loop = loop or asyncio.get_event_loop()
+    value = 0
+
+    value_formatter = value_formatter or (lambda x, y: f'{x} / {y}')
+
+    while value < max_value:
+        value = value_func()
+        await asyncio.sleep(sleep_time, loop=loop)
+
+        progress = math.ceil(value / max_value * dents)
+        progress_line = (progress * full_symbol) + (dents - progress) * empty_symbol
+        out = f'\r\x1b[K{start_symbol}{progress_line}{end_symbol}'
+        if include_value:
+            out += value_formatter(value, max_value)
+
+        print(out, end='', flush=True, file=file)
