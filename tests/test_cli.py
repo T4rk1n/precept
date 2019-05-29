@@ -137,6 +137,8 @@ def test_command_docstring(capsys, monkeypatch):
 
     out, _ = capsys.readouterr()
     assert 'Help from docstring' in out
+    # Bug if Precept has no docstring it print None instead of nothing.
+    assert 'None' not in out
 
 
 def test_nested_command():
