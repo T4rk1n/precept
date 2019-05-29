@@ -58,6 +58,17 @@ class SimpleCli(Precept):
         async def plain(self):
             self.plain_result = 'plain foo'
 
+    @Command(
+        auto=True
+    )
+    async def autoarg(
+            self,
+            required: str,
+            keyword: str = 'default_value',
+            number: int = 22
+    ):
+        self.result = locals()
+
 
 def test_simple_cli():
     cli = SimpleCli()
@@ -138,3 +149,19 @@ def test_nested_command():
     cli.start('nested plain'.split(' '))
 
     assert cli.Nested.plain_result == 'plain foo'
+
+
+def test_auto_arguments():
+    cli = SimpleCli()
+
+    cli.start('autoarg bar'.split())
+
+    assert cli.result['required'] == 'bar'
+    assert cli.result['keyword'] == 'default_value'
+    assert cli.result['number'] == 22
+
+    cli.start('autoarg foo --keyword=bar --number=99'.split(' '))
+
+    assert cli.result['required'] == 'foo'
+    assert cli.result['keyword'] == 'bar'
+    assert cli.result['number'] == 99
