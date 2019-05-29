@@ -143,7 +143,7 @@ class Precept(metaclass=PreceptMeta):
                 ) for x in commands
             ],
             prog=self.prog_name,
-            description=str(self.__doc__),
+            description=getattr(self, '__doc__', ''),
             global_arguments=common_g_arguments + self.global_arguments,
             on_parse=self._on_parse,
             default_command=self.main,
