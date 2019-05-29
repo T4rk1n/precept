@@ -4,9 +4,9 @@ import asyncio
 import itertools
 import typing
 import functools
+import inspect
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-
 import stringcase
 
 from ._immutable import ImmutableDict
@@ -119,7 +119,7 @@ class Command:
 
     # pylint: disable=redefined-builtin
     def __init__(self, *arguments: Argument,
-                 name=None, description=None, help=None):
+                 name=None, description=None, help=None, auto=False):
         self.arguments = arguments
         self._command_name = None
         self.command_name = name
@@ -127,6 +127,7 @@ class Command:
         self.help = help
         self._wrapped = None
         self.obj_name = None
+        self.auto = auto
 
     def __call__(self, obj):
         self.obj_name = getattr(obj, '__name__')
@@ -144,6 +145,25 @@ class Command:
 
             self._wrapped = NewCommand()
         else:
+            if self.auto:
+                arguments = []
+                signature = inspect.signature(obj)
+                for k, v in signature.parameters.items():
+                    if k in ('self', 'args', 'kwargs'):
+                        continue
+                    key = stringcase.spinalcase(k)
+                    default = None
+                    _type = None
+                    if v.annotation:
+                        _type = v.annotation
+                    if v.default is not v.empty:
+                        key = f'--{key}'
+                        default = v.default
+                        if _type is None:
+                            _type = type(default)
+                    arguments.append(Argument(key, type=_type, default=default))
+                self.arguments = tuple(arguments) + tuple(self.arguments)
+
             self._wrapped = CommandFunction(obj, self)
 
         return self._wrapped
