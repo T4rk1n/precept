@@ -318,7 +318,7 @@ class Cli:
         self.commands = {}
 
         subparsers = self.parser.add_subparsers(
-            title='Commands', dest='command'
+            title='Commands', dest='command', metavar=''
         )
 
         for command_name, command, wrapper in commands:
