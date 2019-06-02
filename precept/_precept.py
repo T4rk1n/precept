@@ -101,6 +101,20 @@ class Precept(metaclass=PreceptMeta):
             else:
                 self.config = Config()
 
+        # Insert global arguments from config
+        for _, _, prop in self.config.get_prop_paths():
+            if prop.auto_global:
+                key = f'--{stringcase.spinalcase(prop.qualified_name)}'
+                common_g_arguments.append(
+                    Argument(
+                        key,
+                        type=prop.config_type,
+                        default=prop.default,
+                        help=prop.comment,
+                    )
+                )
+
+        # Gather commands
         attributes = dir(self)
         commands = list(
             itertools.chain(*(
@@ -149,6 +163,8 @@ class Precept(metaclass=PreceptMeta):
             default_command=self.main,
             formatter_class=help_formatter,
         )
+
+        setattr(self.config, '_app', self)
 
     @property
     def config_path(self):
