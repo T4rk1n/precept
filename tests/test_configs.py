@@ -30,6 +30,9 @@ class ConfigTest(Config):
     config_int = ConfigProperty(default=10)
     config_float = ConfigProperty(default=89.99, comment='comment_float')
     config_list = ConfigProperty(default=[1, 2, 3])
+    config_auto_global = ConfigProperty(
+        default=333, auto_global=True, comment='comment_auto_global'
+    )
 
     class ConfigNested(Nestable):
         """docstring_comment"""
@@ -87,7 +90,7 @@ class ConfigCli(Precept):
         )
     )
     async def use_config(self, config_name):
-        self.result = self.config.get(config_name)
+        self.result = getattr(self.config, config_name)
 
 
 @pytest.mark.parametrize(
@@ -301,3 +304,12 @@ def test_config_get_root():
     c = ConfigTest()
     root = c.get_root()
     assert root is c
+
+
+def test_config_auto_global():
+    class Cfg(ConfigCli):
+        config = ConfigTest()
+    cli = Cfg()
+
+    cli.start('--config-auto-global=77 use-config config_auto_global'.split())
+    assert cli.result == 77
