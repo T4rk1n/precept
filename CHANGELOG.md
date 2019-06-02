@@ -1,5 +1,26 @@
 # Changelog
 
+Versions follows [semver](https://semver.org/).
+
+:warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
+
+## [0.3.0]
+### Changed
+
+- :feet: Moved console related functions to console package.
+- :feet: Moved keyhandler to console package.
+
+### Added
+
+- :sparkles: `console.progress_bar`
+- :sparkles: Add auto arguments from command functions.
+- :sparkles: Add auto global argument for config.
+- :construction: Add `symbols` argument to `console.spinner`
+
+### Fixed
+
+- :bug: Config get_root return self if root.
+
 ## [0.2.1]
 ### Fixed
 
