@@ -295,6 +295,8 @@ class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
 
     def get_root(self, current=None):
         parent = self._parent
+        if parent is None:
+            return self
         levels = [current, self._key] if current else [self._key]
         last_parent = parent
         while parent is not None:
