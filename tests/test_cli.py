@@ -167,3 +167,18 @@ def test_auto_arguments():
     assert cli.result['required'] == 'foo'
     assert cli.result['keyword'] == 'bar'
     assert cli.result['number'] == 99
+
+
+def test_commands_subclasses():
+    # test that subclasses inherit all parent commands + new ones.
+    class SubCli(SimpleCli):
+        @Command()
+        async def new_command(self):
+            self.result = 'new'
+
+    cli = SubCli()
+    assert len(cli.cli.commands) == 7
+    cli.start('--quiet simple 3 --bar 6'.split(' '))
+    assert cli.result == 9
+    cli.start('new-command'.split())
+    assert cli.result == 'new'
