@@ -51,7 +51,7 @@ async def test_progress_bar(capsys, max_value, dents):
 
     def value_func():
         if namespace['i'] > 0:
-            out, err = capsys.readouterr()
+            out, _ = capsys.readouterr()
             clean = out.strip().split(']')[0].split('[')[-1]
             num = math.ceil(namespace['i'] / max_value * dents)
             assert num * '#' == clean[:num]

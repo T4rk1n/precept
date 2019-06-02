@@ -161,7 +161,9 @@ class Command:
                         default = v.default
                         if _type is None:
                             _type = type(default)
-                    arguments.append(Argument(key, type=_type, default=default))
+                    arguments.append(
+                        Argument(key, type=_type, default=default)
+                    )
                 self.arguments = tuple(arguments) + tuple(self.arguments)
 
             self._wrapped = CommandFunction(obj, self)

@@ -58,6 +58,7 @@ class SimpleCli(Precept):
         async def plain(self):
             self.plain_result = 'plain foo'
 
+    # pylint: disable=unused-argument
     @Command(
         auto=True
     )

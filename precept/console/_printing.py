@@ -123,7 +123,9 @@ async def progress_bar(
         await asyncio.sleep(sleep_time, loop=loop)
 
         progress = math.ceil(value / max_value * dents)
-        progress_line = (progress * full_symbol) + (dents - progress) * empty_symbol
+        progress_line = (
+            (progress * full_symbol) + (dents - progress) * empty_symbol
+        )
         out = f'\r\x1b[K{start_symbol}{progress_line}{end_symbol}'
         if include_value:
             out += value_formatter(value, max_value)
