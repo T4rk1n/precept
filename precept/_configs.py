@@ -189,6 +189,7 @@ class ConfigProperty:
             environ_name=None,
             auto_environ=True,
             name=None,
+            auto_global=False,
     ):
         self.default = default
         self.comment = comment
@@ -197,11 +198,12 @@ class ConfigProperty:
         self.config_type = config_type or type(default) if default else None
         self.environ_name = environ_name
         self.auto_environ = auto_environ
+        self.auto_global = auto_global
 
     def __set_name__(self, owner, name):
         self.name = name
         if not issubclass(owner, Config):
-            self.qualified_name = f'{owner.__name__}.{name}'
+            self.qualified_name = f'{owner.__name__.lower()}.{name}'
         else:
             self.qualified_name = name
 
@@ -211,11 +213,17 @@ class ConfigProperty:
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        if self.environ_name:
+
+        value = undefined
+
+        app = getattr(instance, '_app', None)
+
+        if self.auto_global and app is not None:
+            value = app.cli.globals.get(self.qualified_name, undefined)
+
+        if self.environ_name and value is undefined:
             # pylint: disable=invalid-envvar-default
             value = os.getenv(self.environ_name, undefined)
-        else:
-            value = undefined
 
         if value is undefined:
             if issubclass(owner, Config):
@@ -238,6 +246,9 @@ class ConfigProperty:
                 ) from err
 
         return value
+
+    def __repr__(self):
+        return f'<ConfigProperty {self.name}>'
 
 
 class ConfigMeta(abc.ABCMeta):
@@ -362,6 +373,7 @@ class Config(Nestable):
         self._data = {}
         self.config_format = config_format
         self.root_name = root_name
+        self._app = None
         self._serializer: BaseConfigSerializer = config_format.serializer(self)
 
     def __getitem__(self, k):
