@@ -294,3 +294,10 @@ def test_new_config_cli(config_name, config_value):
     cli.start(f'--quiet use-config {config_name}'.split(' '))
 
     assert cli.result == config_value
+
+
+def test_config_get_root():
+    # Bug used to raise an error, should always return the root.
+    c = ConfigTest()
+    root = c.get_root()
+    assert root is c
