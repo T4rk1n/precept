@@ -92,9 +92,10 @@ def setup_logger(logger_name,
                  stream=sys.stderr,
                  colors=None):
     logger = logging.getLogger(logger_name)
-    std_handler = logging.StreamHandler(stream=stream)
-    std_handler.setFormatter(ColorFormatter(fmt, datefmt, colors))
-    logger.addHandler(std_handler)
+    if not logger.handlers:
+        std_handler = logging.StreamHandler(stream=stream)
+        std_handler.setFormatter(ColorFormatter(fmt, datefmt, colors))
+        logger.addHandler(std_handler)
     logger.setLevel(level)
     logger.propagate = False
 
