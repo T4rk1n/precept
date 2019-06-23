@@ -16,11 +16,11 @@ Install with pip: `$ pip install precept`
 
 Basic:
 ```python
-from precept import CliApp, Command, Argument
+from precept import Precept, Command, Argument
 
-class MyCli(CliApp):
+class MyCli(Precept):
     """
-    The name of the command will be the 
+    The name of the command will be the name of the class.
     Class docstring is added as cli description.
     """
     @Command(Argument('argument', type=str))
