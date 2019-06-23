@@ -4,6 +4,12 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.3.1]
+### Fixed
+
+- :bug: Fix multiple logging handlers registered during tests.
+- :construction: Add options for configuring the logger.
+
 ## [0.3.0]
 ### Changed
 
