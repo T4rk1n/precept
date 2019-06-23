@@ -2,6 +2,7 @@ import argparse
 import itertools
 import logging
 import os
+import sys
 import typing
 
 import colorama
@@ -45,6 +46,7 @@ class Precept(metaclass=PreceptMeta):
     config_class = None
     config: Config = None
 
+    # pylint: disable=too-many-locals
     def __init__(
             self,
             config_file: typing.Union[str, typing.List[str]] = None,
@@ -52,6 +54,12 @@ class Precept(metaclass=PreceptMeta):
             executor=None,
             add_dump_config_command=False,
             help_formatter=CombinedFormatter,
+            logger_level=logging.INFO,
+            logger_fmt=None,
+            logger_datefmt=None,
+            logger_stream=sys.stderr,
+            logger_colors=None,
+            logger_style='%',
     ):
         """
         :param config_file: Path to the default config file to use. Can be
@@ -72,7 +80,15 @@ class Precept(metaclass=PreceptMeta):
         if is_windows():  # pragma: no cover
             colorama.init()
 
-        self.logger = setup_logger(self.prog_name)
+        self.logger = setup_logger(
+            self.prog_name,
+            logger_level,
+            logger_fmt,
+            logger_datefmt,
+            logger_stream,
+            logger_colors,
+            style=logger_style
+        )
         self.executor = AsyncExecutor(loop, executor)
         self.loop = self.executor.loop
 
