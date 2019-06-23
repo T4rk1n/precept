@@ -1,96 +1,53 @@
-import datetime
 import logging
 import sys
 
-from colorama import Back, Fore, Style
+from colorama import Fore, Style
 
 from .console import colorize
 
 _colors = {
-    'levels': {
-        'INFO': {
-            'fg': Fore.BLACK,
-            'bg': Back.BLUE,
-            'style': Style.BRIGHT,
-        },
-        'DEBUG': {
-            'fg': Fore.BLACK,
-            'bg': Back.RED,
-            'style': Style.BRIGHT,
-        },
-        'ERROR': {
-            'fg': Fore.BLACK,
-            'bg': Back.RED,
-            'style': Style.BRIGHT,
-        },
-        'WARNING': {
-            'fg': Fore.BLACK,
-            'bg': Back.RED,
-            'style': Style.BRIGHT,
-        },
+    'INFO': {
+        'fg': Fore.LIGHTBLUE_EX,
+        'style': Style.BRIGHT,
     },
-    'msg': {
-        'INFO': {
-            'fg': Fore.LIGHTBLUE_EX,
-            'style': Style.BRIGHT,
-        },
-        'DEBUG': {
-            'fg': Fore.LIGHTBLACK_EX,
-            'style': Style.BRIGHT,
-        },
-        'ERROR': {
-            'fg': Fore.RED,
-            'style': Style.BRIGHT,
-        },
-        'WARNING': {
-            'fg': Fore.YELLOW,
-            'style': Style.BRIGHT,
-        },
+    'DEBUG': {
+        'fg': Fore.LIGHTBLACK_EX,
+        'style': Style.BRIGHT,
     },
-    'created': {},
-    'logger_name': {}
+    'ERROR': {
+        'fg': Fore.RED,
+        'style': Style.BRIGHT,
+    },
+    'WARNING': {
+        'fg': Fore.YELLOW,
+        'style': Style.BRIGHT,
+    },
 }
 
 
 class ColorFormatter(logging.Formatter):
-    """
-    fmt takes in the following keys:
-
-    - `{msg}`
-    - `{level}`
-    - `{created}`
-    - `{logger_name}`
-    """
-    def __init__(self, fmt='{msg}', datefmt='%H:%M:%S', colors=None):
-        super(ColorFormatter, self).__init__(datefmt=datefmt)
-        self.fmt = fmt
+    def __init__(self, fmt=None, datefmt=None, colors=None, style='%'):
+        super(ColorFormatter, self).__init__(
+            fmt=fmt, datefmt=datefmt, style=style
+        )
         self.colors = colors or _colors
 
     def format(self, record: logging.LogRecord):
-        level_colors = self.colors.get('levels', {})
-        level = level_colors.get(record.levelname,
-                                 level_colors.get('ERROR'))
-
-        level = colorize(f' {record.levelname}'.ljust(11), **level)
-        msg = record.getMessage()
-        ts = datetime.datetime.fromtimestamp(record.created).strftime(
-            self.datefmt
-        )
-
-        return self.fmt.format(
-            msg=colorize(f'\r\x1b[K{msg}',
-                         **self.colors.get('msg').get(record.levelname)),
-            level=level,
-            created=ts
+        formatted = super(ColorFormatter, self).format(record)
+        return colorize(
+            f'\r\x1b[K{formatted}',
+            **self.colors.get(record.levelname)
         )
 
 
-def setup_logger(logger_name,
-                 level=logging.INFO,
-                 fmt='{msg}',
-                 datefmt='%H:%M:%S',
-                 stream=sys.stderr,
-                 colors=None):
+def setup_logger(
+        logger_name,
+        level=logging.INFO,
+        fmt=None,
+        datefmt=None,
+        stream=sys.stderr,
+        colors=None
+):
     logger = logging.getLogger(logger_name)
     if not logger.handlers:
         std_handler = logging.StreamHandler(stream=stream)
