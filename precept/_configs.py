@@ -5,12 +5,13 @@ import json
 import os
 import typing
 import configparser
-from enum import Enum, auto
+from enum import auto
 
 import stringcase
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 
+from ._tools import AutoNameEnum
 from .errors import ConfigError
 
 
@@ -157,15 +158,7 @@ class IniConfigSerializer(BaseConfigSerializer):
         return data
 
 
-class AutoName(Enum):
-
-    # noinspection PyMethodParameters
-    # pylint: disable=no-self-argument, unused-argument, no-member
-    def _generate_next_value_(name, *args):
-        return name.lower()
-
-
-class ConfigFormat(AutoName):
+class ConfigFormat(AutoNameEnum):
     YML = auto()
     JSON = auto()
     INI = auto()
