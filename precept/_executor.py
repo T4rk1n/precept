@@ -4,13 +4,19 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class AsyncExecutor:
-    """Execute function a ThreadPool or ProcessPool."""
+    """Execute functions in a Pool Executor"""
     def __init__(self, loop=None, executor=None, max_workers=None):
+        """
+        :param loop: asyncio event loop.
+        :param executor: Set to use an already existing PoolExecutor, default
+            to a new ThreadPoolExecutor if not supplied.
+        :param max_workers: Max workers of the created ThreadPoolExecutor.
+        """
         self.loop = loop or asyncio.get_event_loop()
         self.lock = asyncio.Lock(loop=loop)
         if executor:  # pragma: no cover
             self.executor = executor
-        else:  # pragma: no cover
+        else:
             self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
     async def execute(self, func, *args, **kwargs):
@@ -18,8 +24,8 @@ class AsyncExecutor:
         Execute a sync function asynchronously in the executor.
 
         :param func: Synchronous function.
-        :param args:
-        :param kwargs:
+        :param args: Argument to give to the function.
+        :param kwargs: Keyword arguments to give to the function
         :return:
         """
         return await self.loop.run_in_executor(
