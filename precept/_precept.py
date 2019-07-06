@@ -53,6 +53,7 @@ class Precept(metaclass=PreceptMeta):
             config_file: typing.Union[str, typing.List[str]] = None,
             loop=None,
             executor=None,
+            executor_max_workers=None,
             add_dump_config_command=False,
             help_formatter=CombinedFormatter,
             logger_level=logging.INFO,
@@ -90,7 +91,9 @@ class Precept(metaclass=PreceptMeta):
             logger_colors,
             style=logger_style
         )
-        self.executor = AsyncExecutor(loop, executor)
+        self.executor = AsyncExecutor(
+            loop, executor, max_workers=executor_max_workers
+        )
         self.loop = self.executor.loop
 
         common_g_arguments = [
