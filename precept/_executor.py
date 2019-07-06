@@ -1,8 +1,6 @@
 import asyncio
 import functools
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-
-from precept import is_windows
+from concurrent.futures import ThreadPoolExecutor
 
 
 class AsyncExecutor:
@@ -10,13 +8,10 @@ class AsyncExecutor:
     def __init__(self, loop=None, executor=None):
         self.loop = loop or asyncio.get_event_loop()
         self.global_lock = asyncio.Lock(loop=loop)
-        if executor:
+        if executor:  # pragma: no cover
             self.executor = executor
-        elif is_windows():  # pragma: no cover
-            # Processes don't work good with windows.
-            self.executor = ThreadPoolExecutor()
         else:  # pragma: no cover
-            self.executor = ProcessPoolExecutor()
+            self.executor = ThreadPoolExecutor()
 
     async def execute(self, func, *args, **kwargs):
         """
