@@ -4,6 +4,7 @@ import sys
 import pytest
 
 from precept import Precept, Command, Argument
+from precept.events import PreceptEvent
 
 
 class SimpleCli(Precept):
@@ -183,3 +184,27 @@ def test_commands_subclasses():
     assert cli.result == 9
     cli.start('new-command'.split())
     assert cli.result == 'new'
+
+
+def test_events():
+
+    events = []
+    commands = []
+
+    async def on_event(event):
+        events.append(event.name)
+
+        if event == PreceptEvent.CLI_STARTED:
+            commands.append(event.payload.command)
+
+    cli = SimpleCli()
+    for pre_event in PreceptEvent:
+        cli.events.subscribe(pre_event, on_event)
+
+    cli.start('simple 3'.split())
+
+    assert len(events) == 4
+    assert commands[0] == 'simple'
+
+    for act in PreceptEvent:
+        assert act in events
