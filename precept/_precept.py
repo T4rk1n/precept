@@ -8,10 +8,11 @@ import typing
 import colorama
 import stringcase
 
+from .events import EventDispatcher, PreceptEvent
 from ._configs import Config, config_factory
 from ._tools import is_windows
 from ._cli import CombinedFormatter, Cli, Argument, Command
-from precept._executor import AsyncExecutor
+from ._executor import AsyncExecutor
 from ._logger import setup_logger
 
 from ._cli import CommandMeta
@@ -95,6 +96,7 @@ class Precept(metaclass=PreceptMeta):
             loop, executor, max_workers=executor_max_workers
         )
         self.loop = self.executor.loop
+        self.events = EventDispatcher()
 
         common_g_arguments = [
             Argument('-v', '--verbose', action='store_true', default=False),
@@ -182,6 +184,7 @@ class Precept(metaclass=PreceptMeta):
             on_parse=self._on_parse,
             default_command=self.main,
             formatter_class=help_formatter,
+            events=self.events
         )
 
         setattr(self.config, '_app', self)
@@ -201,7 +204,13 @@ class Precept(metaclass=PreceptMeta):
 
         :return:
         """
+        self.loop.run_until_complete(
+            self.events.dispatch(str(PreceptEvent.BEFORE_CLI_START))
+        )
         self.loop.run_until_complete(self.cli.run(args=args))
+        self.loop.run_until_complete(
+            self.events.dispatch(str(PreceptEvent.CLI_STOPPED))
+        )
 
     # pylint: disable=unused-argument
     async def main(self, **kwargs):
@@ -214,7 +223,7 @@ class Precept(metaclass=PreceptMeta):
         self.logger.error('Please enter a command')
         self.cli.parser.print_help()
 
-    def _on_parse(self, args):
+    async def _on_parse(self, args):
         if args.verbose:
             self.logger.setLevel(logging.DEBUG)
 
@@ -231,5 +240,10 @@ class Precept(metaclass=PreceptMeta):
             if self.config_path:
                 self.logger.info(f'Using config {self.config_path}')
                 self.config.read_file(self.config_path)
+
+        await self.events.dispatch(
+            str(PreceptEvent.CLI_PARSED),
+            arguments=args
+        )
 
         self.logger.info(f'{self.prog_name} {self.version}')
