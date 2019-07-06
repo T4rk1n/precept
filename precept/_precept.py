@@ -10,7 +10,8 @@ import stringcase
 
 from ._configs import Config, config_factory
 from ._tools import is_windows
-from ._cli import CombinedFormatter, AsyncExecutor, Cli, Argument, Command
+from ._cli import CombinedFormatter, Cli, Argument, Command
+from precept._executor import AsyncExecutor
 from ._logger import setup_logger
 
 from ._cli import CommandMeta
