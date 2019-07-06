@@ -4,6 +4,19 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.4.0]
+### Changed
+
+- :construction: Executor default to ThreadPoolExecutor.
+- :construction: Export AsyncExecutor.
+
+### Added
+
+- :sparkles: Add Executor wraps
+- :construction: Add Executor max workers argument
+- :sparkles: Add Event & Dispatcher
+- :sparkles: Add cli events.
+
 ## [0.3.1]
 ### Fixed
 
