@@ -47,3 +47,18 @@ class AsyncExecutor:
         ret = await self.execute(func, *args, **kwargs)
         self.lock.release()
         return ret
+
+    def wraps(self, func):
+        """
+        Wraps a synchronous function to execute in the pool when called,
+        making it async.
+
+        :param func: The function to wraps
+        :return: Async wrapped function.
+        """
+
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await self.execute(func, *args, **kwargs)
+
+        return wrapper
