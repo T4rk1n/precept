@@ -1,5 +1,6 @@
 """Class based cli builder with sub commands."""
 import argparse
+import asyncio
 import itertools
 import typing
 import functools
@@ -8,6 +9,7 @@ import inspect
 import stringcase
 
 from ._immutable import ImmutableDict
+from .events import PreceptEvent
 
 
 def _flags_key(flags):
@@ -255,6 +257,7 @@ class Cli:
                  formatter_class=CombinedFormatter,
                  global_arguments=None,
                  default_command=None,
+                 events=None,
                  on_parse=None):
         self.prog = prog
         self.default_command = default_command
@@ -267,6 +270,7 @@ class Cli:
         self._global_arguments = global_arguments or []
         self.globals = {}
         self._on_parse = on_parse
+        self._events = events
 
         for g in self._global_arguments:
             g.register(self.parser)
@@ -298,10 +302,14 @@ class Cli:
             self.globals[key] = kw.pop(key)
 
         if callable(self._on_parse):
-            self._on_parse(namespace)
+            await self._on_parse(namespace)
 
         if command:
-            await command(**kw)
+            operation = command(**kw)
+            event = self._events.dispatch(
+                str(PreceptEvent.CLI_STARTED), command=namespace.command
+            )
+            await asyncio.gather(event, operation)
         elif self.default_command:
             await self.default_command(**vars(namespace))
         else:  # pragma: no cover
