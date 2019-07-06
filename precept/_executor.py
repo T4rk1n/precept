@@ -7,7 +7,7 @@ class AsyncExecutor:
     """Execute function a ThreadPool or ProcessPool."""
     def __init__(self, loop=None, executor=None):
         self.loop = loop or asyncio.get_event_loop()
-        self.global_lock = asyncio.Lock(loop=loop)
+        self.lock = asyncio.Lock(loop=loop)
         if executor:  # pragma: no cover
             self.executor = executor
         else:  # pragma: no cover
@@ -37,7 +37,7 @@ class AsyncExecutor:
         :param kwargs:
         :return:
         """
-        await self.global_lock.acquire()
+        await self.lock.acquire()
         ret = await self.execute(func, *args, **kwargs)
-        self.global_lock.release()
+        self.lock.release()
         return ret
