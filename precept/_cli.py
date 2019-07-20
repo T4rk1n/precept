@@ -8,6 +8,7 @@ import inspect
 
 import stringcase
 
+from ._services import Service
 from ._immutable import ImmutableDict
 from .events import PreceptEvent
 
@@ -74,8 +75,15 @@ class Command:
     description: str
 
     # pylint: disable=redefined-builtin
-    def __init__(self, *arguments: Argument,
-                 name=None, description=None, help=None, auto=False):
+    def __init__(
+            self,
+            *arguments: Argument,
+            name: str = None,
+            description: str = None,
+            help: str = None,
+            auto: bool = False,
+            services: typing.List[Service] = None
+    ):
         self.arguments = arguments
         self._command_name = None
         self.command_name = name
@@ -84,6 +92,7 @@ class Command:
         self._wrapped = None
         self.obj_name = None
         self.auto = auto
+        self.services = services
 
     def __call__(self, obj):
         self.obj_name = getattr(obj, '__name__')
@@ -251,6 +260,7 @@ class CommandMeta(type):
 
 class Cli:
     """argparse cli wrapper."""
+
     def __init__(self, *commands,
                  prog='',
                  description='',
