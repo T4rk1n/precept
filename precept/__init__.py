@@ -7,3 +7,4 @@ from ._configs import (  # noqa: F401
     ConfigProperty, Config, ConfigFormat, Nestable, config_factory
 )
 from ._executor import AsyncExecutor  # noqa: F401
+from ._services import Service  # noqa: F401

@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import itertools
 import logging
 import os
@@ -8,6 +9,7 @@ import typing
 import colorama
 import stringcase
 
+from ._services import Service
 from .events import EventDispatcher, PreceptEvent
 from ._configs import Config, config_factory
 from ._tools import is_windows
@@ -63,6 +65,7 @@ class Precept(metaclass=PreceptMeta):
             logger_stream=sys.stderr,
             logger_colors=None,
             logger_style='%',
+            services: typing.List[Service] = None,
     ):
         """
         :param config_file: Path to the default config file to use. Can be
@@ -70,6 +73,15 @@ class Precept(metaclass=PreceptMeta):
         :param loop: Asyncio loop to use.
         :param executor: concurrent executor to use.
         :param add_dump_config_command: Add a ``dump-config`` command.
+        :param help_formatter: The cli formatter to use.
+        :param logger_level: Set logger level when setting up logging.
+        :param logger_fmt: The format of the logger.
+        :param logger_datefmt: Date format of the logger.
+        :param logger_stream: The stream to print the logs.
+        :param logger_colors: Dictionary with key logger level name and values
+            of bg/fg/style dict.
+        :param logger_style: The symbol to use for formatting.
+        :param services: List of global services to start with the program.
         """
         self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
@@ -79,6 +91,8 @@ class Precept(metaclass=PreceptMeta):
                 and isinstance(config_file, str):
             self._config_file = [config_file]
         self._user_configs = None
+        self.services = services or []
+        self._command = None
 
         if is_windows():  # pragma: no cover
             colorama.init()
@@ -209,8 +223,75 @@ class Precept(metaclass=PreceptMeta):
         )
         self.loop.run_until_complete(self.cli.run(args=args))
         self.loop.run_until_complete(
+            self.stop_services(
+                command=getattr(getattr(self.__class__, self._command, None), 'command', None)
+            )
+        )
+        self.loop.run_until_complete(
             self.events.dispatch(str(PreceptEvent.CLI_STOPPED))
         )
+
+    async def setup_services(self, command: Command = None):
+        """
+
+
+        :param command: The command that was run.
+        :return:
+        """
+        for service in itertools.chain(
+            self.services, (command.services or [])
+        ):
+            await service.setup(self)
+
+    async def start_services(self, command: Command = None):
+        """
+        Start the services, automatically called by start.
+
+        If the application if run with another method you can call this to
+        start the global services without the command argument.
+
+        :param command: The command that was run.
+        :return:
+        """
+        services = []
+        for service in itertools.chain(
+                self.services, (command.services or [])
+        ):
+            if not service.running:
+                task = self.loop.create_task(service.start())
+                task.add_done_callback(
+                    lambda: self.logger.debug(
+                        f'Started service {service.name}'
+                    )
+                )
+                services.append(task)
+
+        await asyncio.gather(*services)
+
+    async def stop_services(self, command: Command = None):
+        """
+        Stop the services, automatically called by start.
+
+        Call this if your application is not run with start
+        and you have running services.
+
+        :param command: The command that was run.
+        :return:
+        """
+        services = []
+        for service in itertools.chain(
+                self.services, (command.services or [])
+        ):
+            if service.running:
+                task = self.loop.create_task(service.stop())
+                task.add_done_callback(
+                    lambda: self.logger.debug(
+                        f'Stopped service {service.name}'
+                    )
+                )
+                services.append(task)
+
+        await asyncio.gather(*services)
 
     # pylint: disable=unused-argument
     async def main(self, **kwargs):
@@ -244,6 +325,18 @@ class Precept(metaclass=PreceptMeta):
         await self.events.dispatch(
             str(PreceptEvent.CLI_PARSED),
             arguments=args
+        )
+
+        self._command = args.command or ''
+
+        command = getattr(
+            getattr(self.__class__, self._command, None),
+            'command',
+            None
+        )
+        await self.setup_services(command)
+        await self.start_services(
+            command=command
         )
 
         self.logger.info(f'{self.prog_name} {self.version}')
