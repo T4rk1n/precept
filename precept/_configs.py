@@ -240,6 +240,19 @@ class ConfigProperty:
 
         return value
 
+    def __set__(self, instance, value):
+        if isinstance(instance, Config):
+            # noinspection PyProtectedMember
+            instance._data[self.name] = value
+        else:
+            root, levels = instance.get_root(self.name)
+            current = root
+            # Don't take the last level as it's the name of the value
+            # we want to set.
+            for level in list(levels)[:-1]:
+                current = current[level]
+            current[self.name] = value
+
     def __repr__(self):
         return f'<ConfigProperty {self.name}>'
 
@@ -315,6 +328,9 @@ class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
         # Just go into descriptor.
         return getattr(self, k)
 
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
     def __len__(self):  # pragma: no cover
         return len(self._props)
 
@@ -350,6 +366,9 @@ class _NestableDescriptor(ConfigProperty):
         if instance is None:
             return self
         return instance.__dict__.get(self.nestable, self.default)
+
+    def __set__(self, instance, value):
+        instance.__dict__[self.nestable] = value
 
 
 class Config(Nestable):
