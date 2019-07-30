@@ -65,6 +65,7 @@ class Precept(metaclass=PreceptMeta):
             logger_colors=None,
             logger_style='%',
             services: typing.List[Service] = None,
+            print_version: bool = True,
     ):
         """
         :param config_file: Path to the default config file to use. Can be
@@ -81,6 +82,7 @@ class Precept(metaclass=PreceptMeta):
             of bg/fg/style dict.
         :param logger_style: The symbol to use for formatting.
         :param services: List of global services to start with the program.
+        :param print_version: Print the version & name of the app before start.
         """
         self.prog_name = self.prog_name or stringcase.spinalcase(
             self.__class__.__name__
@@ -92,6 +94,7 @@ class Precept(metaclass=PreceptMeta):
         self._user_configs = None
         self.services = services or []
         self._command = None
+        self.print_version = print_version
 
         if is_windows():  # pragma: no cover
             colorama.init()
@@ -369,4 +372,5 @@ class Precept(metaclass=PreceptMeta):
         await self.setup_services(command)
         await self.start_services(command)
 
-        self.logger.info(f'{self.prog_name} {self.version}')
+        if self.print_version:
+            self.logger.info(f'{self.prog_name} {self.version}')
