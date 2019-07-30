@@ -4,6 +4,17 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.5.0]
+### Changed
+
+- :hammer: Allow configs to be set on the instance.
+- :hammer: Add `print_version` option.
+
+### Added
+
+- :sparkles: Add services to run alongside applications and commands.
+- :sparkles: Add plugin system.
+
 ## [0.4.0]
 ### Changed
 
