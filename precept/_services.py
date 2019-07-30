@@ -19,10 +19,8 @@ def _dispatch_wrap(func, event, running):
 class ServiceMeta(type):
     def __new__(mcs, name, bases, attributes):
         _new = dict(**attributes)
-        _start = attributes.get('start')
         _name = attributes.get('name') or stringcase.snakecase(name)
         _new['name'] = _name
-        _setup = attributes.get('setup')
 
         for _method, _running in (
                 ('setup', False), ('start', True), ('stop', False)
