@@ -6,4 +6,5 @@ def test_plugin():
         pass
 
     app = PluginTest()
+    # pylint: disable=no-member
     assert app.plugged == 'PLUGGED'

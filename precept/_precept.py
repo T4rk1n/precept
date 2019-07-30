@@ -235,7 +235,11 @@ class Precept(metaclass=PreceptMeta):
         self.loop.run_until_complete(self.cli.run(args=args))
         self.loop.run_until_complete(
             self.stop_services(
-                command=getattr(getattr(self.__class__, self._command, None), 'command', None)
+                command=getattr(
+                    getattr(self.__class__, self._command, None),
+                    'command',
+                    None
+                )
             )
         )
         self.loop.run_until_complete(
@@ -250,7 +254,7 @@ class Precept(metaclass=PreceptMeta):
         :return:
         """
         for service in itertools.chain(
-                self.services, (command.services or [])
+                self.services, (command and command.services or [])
         ):
             await service.setup(self)
 
@@ -266,7 +270,7 @@ class Precept(metaclass=PreceptMeta):
         """
         services = []
         for service in itertools.chain(
-                self.services, (command.services or [])
+                self.services, (command and command.services or [])
         ):
             if not service.running:
                 task = self.loop.create_task(service.start())
@@ -294,7 +298,7 @@ class Precept(metaclass=PreceptMeta):
         """
         services = []
         for service in itertools.chain(
-                self.services, (command.services or [])
+                self.services, (command and command.services or [])
         ):
             if service.running:
                 task = self.loop.create_task(service.stop())
