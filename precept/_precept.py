@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import functools
 import itertools
 import logging
 import os
@@ -8,6 +9,7 @@ import typing
 
 import colorama
 import stringcase
+import pkg_resources
 
 from ._services import Service
 from .events import EventDispatcher, PreceptEvent
@@ -38,9 +40,6 @@ class Precept(metaclass=PreceptMeta):
     flags.
 
     Override `main` method for root handler, it gets all the `global_arguments`
-
-    If a key is in both `global_arguments` and `configs`, it gets a property
-    with key `config_{key}` that get the global first.
     """
     _commands = []
     prog_name = ''
@@ -111,6 +110,7 @@ class Precept(metaclass=PreceptMeta):
         )
         self.loop = self.executor.loop
         self.events = EventDispatcher()
+        self.plugins = {}
 
         common_g_arguments = [
             Argument('-v', '--verbose', action='store_true', default=False),
@@ -203,6 +203,14 @@ class Precept(metaclass=PreceptMeta):
 
         setattr(self.config, '_app', self)
 
+        if not self.loop.is_running():
+            self.loop.run_until_complete(self.setup_plugins())
+        else:
+            self.logger.warning(
+                'Precept application instantiated '
+                'from a running loop. No plugins auto setup.'
+            )
+
     @property
     def config_path(self):
         if self._user_configs:
@@ -239,7 +247,7 @@ class Precept(metaclass=PreceptMeta):
         :return:
         """
         for service in itertools.chain(
-            self.services, (command.services or [])
+                self.services, (command.services or [])
         ):
             await service.setup(self)
 
@@ -260,8 +268,11 @@ class Precept(metaclass=PreceptMeta):
             if not service.running:
                 task = self.loop.create_task(service.start())
                 task.add_done_callback(
-                    lambda: self.logger.debug(
-                        f'Started service {service.name}'
+                    functools.partial(
+                        lambda x: self.logger.debug(
+                            f'Started service {x}'
+                        ),
+                        service.name
                     )
                 )
                 services.append(task)
@@ -285,13 +296,34 @@ class Precept(metaclass=PreceptMeta):
             if service.running:
                 task = self.loop.create_task(service.stop())
                 task.add_done_callback(
-                    lambda: self.logger.debug(
-                        f'Stopped service {service.name}'
+                    functools.partial(
+                        lambda x: self.logger.debug(
+                            f'Stopped service {x}'
+                        ),
+                        service.name
                     )
                 )
                 services.append(task)
 
         await asyncio.gather(*services)
+
+    async def setup_plugins(self):
+        """
+        Load and setup the registered plugins.
+
+        To register a plugin, subclass ``Plugin`` and instantiate
+        then add to ``setup.py`` entry_points:
+
+            '{app_name}.plugins': ['my_plugin = plugin_module:plugin']
+
+        :return:
+        """
+        for plugin in pkg_resources.iter_entry_points(
+                f'{stringcase.snakecase(self.prog_name)}.plugins'
+        ):
+            plug = plugin.load()
+            await plug.setup(self)
+            self.plugins[plugin.name] = plug
 
     # pylint: disable=unused-argument
     async def main(self, **kwargs):
@@ -335,8 +367,6 @@ class Precept(metaclass=PreceptMeta):
             None
         )
         await self.setup_services(command)
-        await self.start_services(
-            command=command
-        )
+        await self.start_services(command)
 
         self.logger.info(f'{self.prog_name} {self.version}')
