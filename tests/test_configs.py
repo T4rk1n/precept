@@ -313,3 +313,12 @@ def test_config_auto_global():
 
     cli.start('--config-auto-global=77 use-config config_auto_global'.split())
     assert cli.result == 77
+
+
+def test_config_set():
+    cfg = ConfigTest()
+    cfg.config_str = 'Changed'
+    assert cfg.config_str == 'Changed'
+
+    cfg.config_nested.nested_str = 'Also changed'
+    assert cfg.config_nested.nested_str == 'Also changed'
