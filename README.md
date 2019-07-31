@@ -6,9 +6,9 @@
 [![LICENSE](https://img.shields.io/github/license/T4rk1n/precept.svg)](./LICENSE)
 [![Downloads](https://pepy.tech/badge/precept)](https://pepy.tech/project/precept)
 
-Toolbox to create async command line applications.
+Async application framework.
 
-## Install 
+## Install
 
 Install with pip: `$ pip install precept`
 
@@ -20,7 +20,9 @@ from precept import Precept, Command, Argument
 
 class MyCli(Precept):
     """
-    The name of the command will be the name of the class.
+    The name of the application will be the spinal-case version of 
+    the name of the class.
+    
     Class docstring is added as cli description.
     """
     @Command(Argument('argument', type=str))
@@ -34,11 +36,8 @@ if __name__ == '__main__':
    cli()
 ```
 
-For local testing: Set `entry_points.console_script` to `my-cli = my_package.my_cli:cli` in `setup.py` and `$ pip install -e .`
+For local testing:
 
-Then call: `$ my-cli my-command hello` -> print `hello`
-
-## License
-
-[MIT license](./LICENSE)
-
+- Set `entry_points.console_script` to `my-cli = my_package.my_cli:cli` in `setup.py`
+- Install locally: `$ pip install -e .`
+- Then call: `$ my-cli my-command hello` -> print `hello`
