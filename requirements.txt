@@ -9,4 +9,6 @@ pytest-pylint==0.14.0
 pytest-flake8==1.0.4
 pytest-cov==2.7.1
 python-coveralls==2.9.2
-
+sphinx==2.1.2
+Flask-Sphinx-Themes==1.0.2
+m2r==0.2.1
