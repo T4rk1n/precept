@@ -1,0 +1,22 @@
+pre, tt, code {
+    font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    font-size: 0.9em;
+    background: #eee;
+}
+
+pre {
+    margin: 15px 0;
+    padding: 7px;
+}
+
+span.pre {
+    padding: 3px;
+}
+
+
+caption {
+    padding: 0.25em 0.7em;
+    border: 1px solid #888;
+    border-bottom: none;
+    font-weight: bolder;
+}
