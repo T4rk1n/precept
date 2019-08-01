@@ -20,6 +20,11 @@ def _flags_key(flags):
 class Argument(ImmutableDict):
     """
     Argument of a Command, can either be optional or not depending on the flags
+
+    .. seealso::
+
+        https://docs.python.org/3/library/argparse.html#the-add-argument-method
+
     """
 
     # pylint: disable=unused-argument, redefined-builtin
@@ -36,6 +41,20 @@ class Argument(ImmutableDict):
             metavar: str = None,
             dest: str = None,
     ):
+        """
+        :param flags: How to call the argument, prefixing with ``-`` makes the
+            argument a keyword. Example: ``'-d', '--date'`` make the variable
+            available as ``date``, but can be supplied as ``-d`` from the cli.
+        :param type: The type of the variable to cast to, default to str.
+        :param help: Description to go along with
+        :param choices: The available choices to choose from.
+        :param default: The value to take if not supplied.
+        :param nargs: Number of times the argument can be supplied.
+        :param action: What to do with the argument.
+        :param required: Makes a keyword argument required.
+        :param metavar: Name in help.
+        :param dest: The name of the variable to add the value to once parsed.
+        """
         super().__init__(**{
             k: v for k, v in locals().items()
             if k in self._prop_keys and v is not None
