@@ -4,15 +4,6 @@ import math
 
 from colorama import Style, Fore
 
-__all__ = [
-    'colorize',
-    'spinner',
-    'format_table',
-    'print_table',
-    'goto_xy',
-    'progress_bar',
-]
-
 
 def colorize(text, bg=None, fg=None, style=None):
     fg = fg or ''
