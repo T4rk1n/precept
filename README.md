@@ -1,6 +1,7 @@
 # precept
 
 [![CircleCI](https://circleci.com/gh/T4rk1n/precept.svg?style=svg)](https://circleci.com/gh/T4rk1n/precept)
+[![Documentation Status](https://readthedocs.org/projects/precept/badge/?version=latest)](https://precept.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/T4rk1n/precept/badge.svg)](https://coveralls.io/github/T4rk1n/precept)
 [![PyPI version](https://badge.fury.io/py/precept.svg)](https://badge.fury.io/py/precept)
 [![LICENSE](https://img.shields.io/github/license/T4rk1n/precept.svg)](./LICENSE)
@@ -41,3 +42,5 @@ For local testing:
 - Set `entry_points.console_script` to `my-cli = my_package.my_cli:cli` in `setup.py`
 - Install locally: `$ pip install -e .`
 - Then call: `$ my-cli my-command hello` -> print `hello`
+
+**[Full documentation](http://precept.readthedocs.io/)**
