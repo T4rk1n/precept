@@ -4,6 +4,11 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.5.1]
+### Fixed
+
+- :hammer: Removed star imports.
+
 ## [0.5.0]
 ### Changed
 
