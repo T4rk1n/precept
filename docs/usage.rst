@@ -16,8 +16,53 @@ Precept comes with many classes and functions to build async applications,
 the main class consist of :py:class:`~precept.Precept` which you
 subclass to create your application. Methods of this class decorated with
 :py:class:`~precept.Command` are automatically added as sub command to the
-application. If no command was supplied, py:func:`~precept.Precept.main`
-will be called instead.
+application.
+
+Basic example defining an echo command:
+
+.. code-block:: python
+
+    from precept import Precept, Command, Argument
+
+    class App(Precept):
+        @Command(
+            Argument('name'),
+        )
+        async def echo(self, name):
+            print(f'Hello {name}')
+
+Then call from the terminal like this: ``app echo bob`` -> Prints ``Hello bob``
+
+.. note::
+
+    If no command was supplied, ``main`` will be called instead.
+
+Starting the application
+------------------------
+
+To create a console application from a precept app you need to add function
+that will create an instance of your precept subclass and call start
+then add it to ``setup.py``.
+
+
+:app.py:
+    .. code-block:: python
+
+        def cli():
+            App().start()
+
+:setup.py:
+    .. code-block:: python
+
+        from setuptools import setup
+
+        setup(
+            entry_points: {
+                'console_scripts': ['cli = app:cli']
+            }
+        )
+
+*You can also create a global instance of the app and assign the entrypoint to it's start method*
 
 Configs
 =======
@@ -64,6 +109,18 @@ To use the config with files, add a ``config_file`` argument to precept init:
             super().__init__(
                 config_file='config.yml',
             )
+
+
+Precept will automatically add a ``--config-file`` global argument for the user
+to override.
+
+It will also add a ``dump-config`` command to dump the default config for first
+use.
+
+.. note::
+
+    The ``config_file`` argument can also be a list, in which case the first
+    file found will be used.
 
 Config format
 -------------
