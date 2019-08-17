@@ -145,6 +145,7 @@ def test_dump_config_defaults():
     config_file = './test.yml'
     try:
         cli = ConfigCli()
+        cli.config.config_format = ConfigFormat.YML
         cli.start(f'--quiet dump-configs {config_file}'.split(' '))
         assert os.path.exists(config_file)
         with open(config_file, 'r') as f:
@@ -161,6 +162,7 @@ def test_dump_config_current_configs():
     output = './output.yml'
     try:
         cli = ConfigCli()
+        cli.config.config_format = ConfigFormat.YML
         cli.config.read_dict(override_configs)
         cli.config.save(config_file)
 
