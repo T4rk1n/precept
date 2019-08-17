@@ -210,10 +210,7 @@ class Precept(metaclass=PreceptMeta):
         if not self.loop.is_running():
             self.loop.run_until_complete(self.setup_plugins())
         else:
-            self.logger.warning(
-                'Precept application instantiated '
-                'from a running loop. No plugins auto setup.'
-            )
+            self.loop.create_task(self.setup_plugins())
 
     @property
     def config_path(self):
