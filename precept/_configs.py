@@ -194,10 +194,11 @@ class TomlConfigSerializer(BaseConfigSerializer):
                     table.add(tomlkit.nl())
             else:
                 if prop.comment is not None:
-                    if len(prop.comment) > 50:
+                    if len(prop.comment) > 40:
+                        # Only short comments are inlined.
                         section.add(tomlkit.nl())
-                        section.add(key, value)
                         add_comment(section, prop.comment)
+                        section.add(key, value)
                     else:
                         section.add(key, value)
                         section[key].comment(prop.comment)
