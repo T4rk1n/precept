@@ -4,6 +4,16 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.6.0]
+### Added
+
+- :sparkles: Add TOML config format.
+
+### Changed
+
+- :hammer: Change default config format to TOML.
+- :bug: Change config_format to property auto updating serializer.
+
 ## [0.5.1]
 ### Fixed
 
