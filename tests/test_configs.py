@@ -216,7 +216,9 @@ def test_config_class():
     assert cfg.config_nested.double_nested.double == 77.77
 
 
-@pytest.mark.parametrize('config_format', [ConfigFormat.YML, ConfigFormat.INI])
+@pytest.mark.parametrize('config_format', [
+    ConfigFormat.YML, ConfigFormat.INI, ConfigFormat.TOML
+])
 def test_config_comments(tmp_path, config_format):
     cfg = ConfigTest(config_format=config_format)
 
