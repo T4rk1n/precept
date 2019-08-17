@@ -280,6 +280,10 @@ class ConfigProperty:
         if self.auto_global and app is not None:
             value = app.cli.globals.get(self.qualified_name, undefined)
 
+            # Only take the value if it's not the default.
+            if value is not undefined and value == self.default:
+                value = undefined
+
         if self.environ_name and value is undefined:
             # pylint: disable=invalid-envvar-default
             value = os.getenv(self.environ_name, undefined)
