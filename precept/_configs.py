@@ -440,6 +440,8 @@ class Config(Nestable):
     """
     Root config class, assign ConfigProperties as class members.
     """
+    _serializer: BaseConfigSerializer
+    _config_format: ConfigFormat
 
     def __init__(
             self,
@@ -448,10 +450,9 @@ class Config(Nestable):
     ):
         super().__init__(None)
         self._data = {}
-        self.config_format = config_format
         self.root_name = root_name
+        self.config_format = config_format
         self._app = None
-        self._serializer: BaseConfigSerializer = config_format.serializer(self)
 
     def __getitem__(self, k):
         # Here get the prop descriptor and return the value or default
@@ -466,6 +467,15 @@ class Config(Nestable):
 
     def save(self, path: str):
         self._serializer.dump(self, path)
+
+    @property
+    def config_format(self) -> ConfigFormat:
+        return self._config_format
+
+    @config_format.setter
+    def config_format(self, value: ConfigFormat):
+        self._config_format = value
+        self._serializer = self._config_format.serializer(self)
 
 
 def config_factory(data, root=None, key=None):
