@@ -5,9 +5,12 @@ import json
 import os
 import typing
 import configparser
+import textwrap
 from enum import auto
 
 import stringcase
+import tomlkit
+
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 
@@ -158,12 +161,74 @@ class IniConfigSerializer(BaseConfigSerializer):
         return data
 
 
+class TomlConfigSerializer(BaseConfigSerializer):
+
+    def dump(self, configs, path):
+        doc = tomlkit.document()
+        root_comment = getattr(configs, '__doc__', '')
+
+        def add_comment(sec, comment):
+            for line in textwrap.wrap(comment.strip()):
+                sec.add(tomlkit.comment(line))
+
+        if root_comment:
+            add_comment(doc, root_comment.strip())
+            doc.add(tomlkit.nl())
+
+        for p, value, prop in configs.get_prop_paths():
+            section = doc
+            key = p
+            if '.' in p:
+                parts = p.split('.')
+                key = parts[-1]
+
+                for part in parts[:-1]:
+                    section = section[part]
+
+            if isinstance(value, Nestable):
+                # Just add a table for those.
+                table = tomlkit.table()
+                section.add(key, table)
+                if prop.comment is not None:
+                    add_comment(table, prop.comment)
+                    table.add(tomlkit.nl())
+            else:
+                if prop.comment is not None:
+                    if len(prop.comment) > 50:
+                        section.add(tomlkit.nl())
+                        section.add(key, value)
+                        add_comment(section, prop.comment)
+                    else:
+                        section.add(key, value)
+                        section[key].comment(prop.comment)
+                else:
+                    section.add(key, value)
+
+        with open(path, 'w') as file:
+            file.write(tomlkit.dumps(doc))
+
+    def load(self, path):
+        with open(path) as file:
+            return tomlkit.parse(file.read())
+
+
 class ConfigFormat(AutoNameEnum):
+    """
+    Available formats to use with configs.
+
+    - TOML provided by tomlkit, supports comments and more complex types.
+    - YML provided by ruamel.yaml, supports comments and more complex types.
+    - JSON stdlib, no support for comments and types.
+    - INI stdlib, support for comments.
+    """
+    TOML = auto()
     YML = auto()
     JSON = auto()
     INI = auto()
 
     def serializer(self, config):
+        if self == ConfigFormat.TOML:
+            return TomlConfigSerializer()
         if self == ConfigFormat.YML:
             return YamlConfigSerializer()
         if self == ConfigFormat.JSON:
@@ -378,8 +443,8 @@ class Config(Nestable):
 
     def __init__(
             self,
-            config_format: ConfigFormat = ConfigFormat.YML,
-            root_name='CONFIG'
+            config_format: ConfigFormat = ConfigFormat.TOML,
+            root_name='config'
     ):
         super().__init__(None)
         self._data = {}
