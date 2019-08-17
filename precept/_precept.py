@@ -94,6 +94,7 @@ class Precept(metaclass=PreceptMeta):
         self._user_configs = None
         self.services = services or []
         self._command = None
+        self._args = {}
         self.print_version = print_version
 
         if is_windows():  # pragma: no cover
@@ -248,7 +249,7 @@ class Precept(metaclass=PreceptMeta):
 
     async def setup_services(self, command: Command = None):
         """
-
+        Setup the services for the command or the main application.
 
         :param command: The command that was run.
         :return:
@@ -366,6 +367,7 @@ class Precept(metaclass=PreceptMeta):
             arguments=args
         )
 
+        self._args = args
         self._command = args.command or ''
 
         command = getattr(
