@@ -38,6 +38,14 @@ def get_deep(data, *keys, default=None):
     return value, found  # pragma: no cover
 
 
+def merge(initial, *to_merge):
+    data = dict(initial)
+    for update in to_merge:
+        data.update(update)
+
+    return data
+
+
 def _to_yaml(root: CommentedMap, obj):
     if isinstance(obj, Nestable):
         data = CommentedMap()
@@ -210,7 +218,7 @@ class TomlConfigSerializer(BaseConfigSerializer):
 
     def load(self, path):
         with open(path) as file:
-            return tomlkit.parse(file.read())
+            return dict(tomlkit.parse(file.read()))
 
 
 class ConfigFormat(AutoNameEnum):
@@ -465,10 +473,11 @@ class Config(Nestable):
         return self._data.get(k, prop.default)
 
     def read_dict(self, data: dict):
-        self._data = data
+        self._data = merge(self._data, data)
 
     def read_file(self, path: str):
-        self._data = self._serializer.load(path)
+        # Merge with file as base so set values stays.
+        self._data = merge(self._serializer.load(path), self._data)
 
     def save(self, path: str):
         self._serializer.dump(self, path)
