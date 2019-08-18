@@ -326,3 +326,41 @@ def test_config_set():
 
     cfg.config_nested.nested_str = 'Also changed'
     assert cfg.config_nested.nested_str == 'Also changed'
+
+
+def test_config_order(tmp_path):
+    # Config  order should be
+    # - cli arguments
+    # - updated dict values
+    # - set values
+    # - config file.
+    cfg = ConfigTest()
+    cfg._app = ConfigCli()
+
+    cfg.config_str = 'changed 2'
+    cfg.config_nested.nested_str = 'changed one'
+    config_path = os.path.join(tmp_path, 'config.toml')
+
+    # Test changed values stays after reading dict.
+    cfg.read_dict({'config_str': 'updated'})
+
+    assert cfg.config_nested.nested_str == 'changed one'
+    assert cfg.config_str == 'updated'
+
+    # Test that reading the config file doesn't change set values
+    cfg2 = ConfigTest()
+    cfg2.config_str_with_default = 'Changed again'
+    cfg2.save(config_path)
+
+    cfg.read_file(config_path)
+
+    assert cfg.config_str_with_default == 'Changed again'
+    assert cfg.config_str == 'updated'
+    assert cfg.config_nested.nested_str == 'changed one'
+
+    # Test argument take precedence over all
+    cfg._app.cli.globals = {
+        'config_auto_global': 555
+    }
+    cfg.config_auto_global = 111
+    assert cfg.config_auto_global == 555
