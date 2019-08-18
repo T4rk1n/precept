@@ -4,6 +4,16 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.6.1]
+### Fixed
+
+- :bug: Fix config order of reading (argument > code > file).
+- :bug: Fix comment below variables in toml config format.
+- :bug: Fix plugin registration for running loops instantiation.
+- :bug: Fix config_class instantiation
+- :bug: Fix config from cli arguments with default value.
+- :bug: Fix toml null values.
+
 ## [0.6.0]
 ### Added
 
