@@ -179,6 +179,14 @@ class TomlConfigSerializer(BaseConfigSerializer):
             for line in textwrap.wrap(comment.strip()):
                 sec.add(tomlkit.comment(line))
 
+        def add_value(sec, k, v):
+            is_none = v is None
+            if is_none:
+                sec.add(tomlkit.comment(f'{k} = # Uncomment to use'))
+            else:
+                sec.add(k, v)
+            return not is_none
+
         if root_comment:
             add_comment(doc, root_comment.strip())
             doc.add(tomlkit.nl())
@@ -206,10 +214,11 @@ class TomlConfigSerializer(BaseConfigSerializer):
                         # Only short comments are inlined.
                         section.add(tomlkit.nl())
                         add_comment(section, prop.comment)
-                        section.add(key, value)
+                        add_value(section, key, value)
                     else:
-                        section.add(key, value)
-                        section[key].comment(prop.comment)
+                        good = add_value(section, key, value)
+                        if good:
+                            section[key].comment(prop.comment)
                 else:
                     section.add(key, value)
 
