@@ -323,7 +323,7 @@ class ConfigProperty:
                 current = current[level]
             current[self.name] = value
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return f'<ConfigProperty {self.name}>'
 
 
@@ -398,7 +398,7 @@ class Nestable(collections.abc.Mapping, metaclass=ConfigMeta):
         # Just go into descriptor.
         return getattr(self, k)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):  # pragma: no cover
         setattr(self, key, value)
 
     def __len__(self):  # pragma: no cover

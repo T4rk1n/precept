@@ -9,7 +9,7 @@ class Plugin:
     """
     name: str = ''
 
-    async def setup(self, application):
+    async def setup(self, application):  # pragma: no cover
         """
         Setup the plugin
 

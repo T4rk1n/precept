@@ -33,8 +33,7 @@ class AsyncExecutor:
             functools.partial(func, *args, **kwargs)
         )
 
-    # pragma: no cover
-    async def execute_with_lock(self, func, *args, **kwargs):
+    async def execute_with_lock(self, func, *args, **kwargs):  # pragma: no cover # noqa: E501
         """
         Acquire lock before executing the function.
 

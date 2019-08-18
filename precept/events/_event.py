@@ -17,10 +17,10 @@ class Event:
         self.payload = ImmutableDict(**payload)
         self.timestamp = time.time()
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return self.name
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return f'<{self.__class__.__name__} {self.name} {self.timestamp}>'
 
 
@@ -32,7 +32,7 @@ class PreceptEvent(AutoNameEnum):
     CLI_STOPPED = enum.auto()
 
     # pylint: disable=comparison-with-callable
-    def __eq__(self, other):
+    def __eq__(self, other):  # pragma: no cover
         if isinstance(other, PreceptEvent):
             return self.value == other.value
         if isinstance(other, str):
