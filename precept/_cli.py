@@ -143,7 +143,7 @@ class Command:
                     if v.default is not v.empty:
                         key = f'--{key}'
                         default = v.default
-                        if _type is None:
+                        if _type is None:  # pragma: no cover
                             _type = type(default)
                     arguments.append(
                         Argument(key, type=_type, default=default)
@@ -181,7 +181,7 @@ class Command:
     def command_name(self, value):
         self._command_name = stringcase.spinalcase(value) if value else value
 
-    def __hash__(self):
+    def __hash__(self):  # pragma: no cover
         return self.command_name
 
 
@@ -191,7 +191,7 @@ class WrappedCommand:
     def __repr__(self):  # pragma: no cover
         return f'<{self.__class__.__name__} "{self.command.command_name}">'
 
-    def get_commands(self) -> typing.Tuple[str, Command, typing.Callable]:
+    def get_commands(self) -> typing.Tuple[str, Command, typing.Callable]:  # pragma: no cover # noqa: E501
         raise NotImplementedError
 
 
@@ -212,20 +212,17 @@ class CommandFunction(WrappedCommand):
     def get_commands(self):
         return [(self.command.command_name, self.command, self)]
 
-    def set_func(self, func):
-        self.func = func
-
 
 class CommandClass(WrappedCommand):
     _commands: typing.List[str]
 
-    def __call__(self, command, *args, **kwargs):
+    def __call__(self, command, *args, **kwargs):  # pragma: no cover
         return getattr(self, command)(*args, **kwargs)
 
     def get_commands(self):
         c = []
         for command in (getattr(self.__class__, x) for x in self._commands):
-            if issubclass(command.__class__, CommandClass):
+            if issubclass(command.__class__, CommandClass):  # pragma: no cover
                 # Recursively get all the commands.
                 c += command.get_commands()
             else:

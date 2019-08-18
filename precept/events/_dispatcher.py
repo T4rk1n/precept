@@ -29,6 +29,6 @@ class EventDispatcher:
         action = Event(event, payload=payload)
         for subscriber in self._subscribers[event]:
             await subscriber(action)
-            if action.stop:
+            if action.stop:  # pragma: no cover
                 break
             action.num += 1

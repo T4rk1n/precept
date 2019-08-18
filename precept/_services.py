@@ -53,7 +53,7 @@ class Service(metaclass=ServiceMeta):
         self.running: bool = False
         self.ready: bool = False
 
-    async def setup(self, application):
+    async def setup(self, application):  # pragma: no cover
         """
         Called when added to services.
 
@@ -66,7 +66,7 @@ class Service(metaclass=ServiceMeta):
         """
         raise NotImplementedError
 
-    async def start(self):
+    async def start(self):  # pragma: no cover
         """
         Start the service.
 
@@ -74,7 +74,7 @@ class Service(metaclass=ServiceMeta):
         """
         raise NotImplementedError
 
-    async def stop(self):
+    async def stop(self):  # pragma: no cover
         """
         Stop the service.
 
