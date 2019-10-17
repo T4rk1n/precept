@@ -6,6 +6,7 @@ import os
 import typing
 import configparser
 import textwrap
+import copy
 from enum import auto
 
 import stringcase
@@ -479,6 +480,12 @@ class Config(Nestable):
     def __getitem__(self, k):
         # Here get the prop descriptor and return the value or default
         prop = getattr(type(self), k)
+        if isinstance(prop, _NestableDescriptor):
+            data = self._data.get(k, undefined)
+            if data is undefined:
+                data = copy.deepcopy(prop.default)
+                self._data[k] = data
+            return data
         return self._data.get(k, prop.default)
 
     def read_dict(self, data: dict):
