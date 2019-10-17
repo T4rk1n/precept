@@ -4,6 +4,11 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.6.2]
+### Fixed
+
+- :bug: Fix config multi instance
+
 ## [0.6.1]
 ### Fixed
 
