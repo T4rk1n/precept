@@ -364,3 +364,22 @@ def test_config_order(tmp_path):
     }
     cfg.config_auto_global = 111
     assert cfg.config_auto_global == 555
+
+
+def test_multi_config_instances():
+    cfg1 = ConfigTest()
+    cfg2 = ConfigTest()
+    cfg1.config_str = 'Foo'
+
+    assert cfg1.config_str != cfg2.config_str
+
+    cfg2.config_nested.nested_str = 'multi-instance'
+
+    assert cfg1.config_nested.nested_str != cfg2.config_nested.nested_str
+
+    cfg1.config_nested.double_nested.double = 3.0
+
+    assert (
+        cfg1.config_nested.double_nested.double
+        != cfg2.config_nested.double_nested.double
+    )
