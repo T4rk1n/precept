@@ -320,6 +320,7 @@ class ConfigProperty:
                 if isinstance(value, str) and self.config_type == list:
                     value = yaml.round_trip_load(value)
                 else:
+                    # pylint: disable=not-callable
                     value = self.config_type(value)
             except TypeError as err:
                 raise ConfigError(
