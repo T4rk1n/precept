@@ -237,7 +237,11 @@ class Precept(metaclass=PreceptMeta):
         self.loop.run_until_complete(
             self.events.dispatch(str(PreceptEvent.BEFORE_CLI_START))
         )
-        self.loop.run_until_complete(self.cli.run(args=args))
+        try:
+            self.loop.run_until_complete(self.cli.run(args=args))
+        except KeyboardInterrupt:
+            self.loop.run_until_complete(self.events.dispatch('KeyboardInterrupt'))
+            raise
         self.loop.run_until_complete(
             self.stop_services(
                 command=getattr(
