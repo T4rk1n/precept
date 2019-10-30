@@ -267,6 +267,7 @@ class ConfigProperty:
             auto_environ=True,
             name=None,
             auto_global=False,
+            global_name=None,
     ):
         self.default = default
         self.comment = comment
@@ -276,6 +277,7 @@ class ConfigProperty:
         self.environ_name = environ_name
         self.auto_environ = auto_environ
         self.auto_global = auto_global
+        self.global_name = global_name
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -286,6 +288,9 @@ class ConfigProperty:
 
         if self.environ_name is None and self.auto_environ:
             self.environ_name = name.upper()
+
+        if self.global_name is None and self.auto_global:
+            self.global_name = self.qualified_name
 
     def __get__(self, instance, owner):
         if instance is None:
