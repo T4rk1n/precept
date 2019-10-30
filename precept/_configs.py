@@ -273,7 +273,7 @@ class ConfigProperty:
         self.comment = comment
         self.name = name
         self.qualified_name = None
-        self.config_type = config_type or type(default) if default else None
+        self.config_type = config_type or (type(default) if default else None)
         self.environ_name = environ_name
         self.auto_environ = auto_environ
         self.auto_global = auto_global
