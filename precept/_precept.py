@@ -144,15 +144,22 @@ class Precept(metaclass=PreceptMeta):
         # Insert global arguments from config
         for _, _, prop in self.config.get_prop_paths():
             if prop.auto_global:
-                key = f'--{stringcase.spinalcase(prop.qualified_name)}'
-                common_g_arguments.append(
-                    Argument(
-                        key,
-                        type=prop.config_type,
-                        default=prop.default,
-                        help=prop.comment,
-                    )
+                key = f'--{stringcase.spinalcase(prop.global_name)}'
+
+                options = dict(
+                    default=prop.default,
+                    help=prop.comment,
                 )
+                if prop.config_type == bool:
+                    if prop.default is True:
+                        action = 'store_false'
+                    else:
+                        action = 'store_true'
+                    options['action'] = action
+                else:
+                    options['type'] = prop.config_type
+
+                common_g_arguments.append(Argument(key,**options))
 
         # Gather commands
         attributes = dir(self)
