@@ -74,17 +74,17 @@ class SimpleCli(Precept):
 
 def test_simple_cli():
     cli = SimpleCli()
-    cli.start('--quiet simple 1'.split(' '))
+    cli.start('--quiet simple 1')
 
     assert cli.result == 4
 
-    cli.start('--quiet simple 3 --bar 6'.split(' '))
+    cli.start('--quiet simple 3 --bar 6')
     assert cli.result == 9
 
 
 def test_main():
     cli = SimpleCli()
-    cli.start('--quiet --universal foo'.split(' '))
+    cli.start('--quiet --universal foo')
 
     assert cli.result == 'foo'
 
@@ -135,7 +135,7 @@ def test_command_docstring(capsys, monkeypatch):
 
     monkeypatch.setattr(sys, 'exit', patch_exit)
 
-    cli.start('--help'.split(' '))
+    cli.start('--help')
 
     out, _ = capsys.readouterr()
     assert 'Help from docstring' in out
@@ -146,11 +146,11 @@ def test_command_docstring(capsys, monkeypatch):
 def test_nested_command():
     cli = SimpleCli()
 
-    cli.start('nested --nested=foo nest bar'.split(' '))
+    cli.start('nested --nested=foo nest bar')
 
     assert cli.Nested.nest_much == 'foo-bar'
 
-    cli.start('nested plain'.split(' '))
+    cli.start('nested plain')
 
     assert cli.Nested.plain_result == 'plain foo'
 
@@ -158,13 +158,13 @@ def test_nested_command():
 def test_auto_arguments():
     cli = SimpleCli()
 
-    cli.start('autoarg bar'.split())
+    cli.start('autoarg bar')
 
     assert cli.result['required'] == 'bar'
     assert cli.result['keyword'] == 'default_value'
     assert cli.result['number'] == 22
 
-    cli.start('autoarg foo --keyword=bar --number=99'.split(' '))
+    cli.start('autoarg foo --keyword=bar --number=99')
 
     assert cli.result['required'] == 'foo'
     assert cli.result['keyword'] == 'bar'
@@ -180,9 +180,9 @@ def test_commands_subclasses():
 
     cli = SubCli()
     assert len(cli.cli.commands) == 7
-    cli.start('--quiet simple 3 --bar 6'.split(' '))
+    cli.start('--quiet simple 3 --bar 6')
     assert cli.result == 9
-    cli.start('new-command'.split())
+    cli.start('new-command')
     assert cli.result == 'new'
 
 
@@ -201,7 +201,7 @@ def test_events():
     for pre_event in PreceptEvent:
         cli.events.subscribe(pre_event, on_event)
 
-    cli.start('simple 3'.split())
+    cli.start('simple 3')
 
     assert len(events) == 4
     assert commands[0] == 'simple'

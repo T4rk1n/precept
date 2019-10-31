@@ -1,4 +1,6 @@
 """Class based cli builder with sub commands."""
+import shlex
+import sys
 import argparse
 import asyncio
 import itertools
@@ -8,6 +10,7 @@ import inspect
 
 import stringcase
 
+from ._tools import is_windows
 from ._services import Service
 from ._immutable import ImmutableDict
 from .events import PreceptEvent
@@ -297,6 +300,7 @@ class Cli:
         self.globals = {}
         self._on_parse = on_parse
         self._events = events
+        self.raw_args = []
 
         for g in self._global_arguments:
             g.register(self.parser)
@@ -311,13 +315,16 @@ class Cli:
             command.register(subparsers)
             self.commands[command_name] = wrapper
 
-    async def run(self, args=None):
+    async def run(self, args: typing.Union[str, list] = None):
         """
         Parse and call the appropriate handler.
 
         :param args: None takes sys.argv
         :return:
         """
+        if isinstance(args, str):
+            args = shlex.split(args, posix=not is_windows())
+        self.raw_args = args or sys.argv
         namespace = self.parser.parse_args(args=args)
         command = self.commands.get(namespace.command)
         kw = vars(namespace).copy()

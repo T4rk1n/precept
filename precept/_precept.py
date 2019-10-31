@@ -49,7 +49,7 @@ class Precept(metaclass=PreceptMeta):
     config_class = None
     config: Config = None
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-statements
     def __init__(
             self,
             config_file: typing.Union[str, typing.List[str]] = None,
@@ -159,7 +159,7 @@ class Precept(metaclass=PreceptMeta):
                 else:
                     options['type'] = prop.config_type
 
-                common_g_arguments.append(Argument(key,**options))
+                common_g_arguments.append(Argument(key, **options))
 
         # Gather commands
         attributes = dir(self)
@@ -240,7 +240,9 @@ class Precept(metaclass=PreceptMeta):
         try:
             self.loop.run_until_complete(self.cli.run(args=args))
         except KeyboardInterrupt:
-            self.loop.run_until_complete(self.events.dispatch('KeyboardInterrupt'))
+            self.loop.run_until_complete(
+                self.events.dispatch('KeyboardInterrupt')
+            )
             raise
         self.loop.run_until_complete(
             self.stop_services(
