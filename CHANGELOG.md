@@ -4,6 +4,15 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.6.3]
+### Fixed
+
+- :bug: Fix config type.
+- :construction: Add KeyboardInterrupt event in case some resources need to be cleaned up.
+- :hammer: Add global name argument to config property for use with auto global.
+- :construction: Add raw_args to cli attributes.
+- :hammer: Allow for start arguments to be a string command.
+
 ## [0.6.2]
 ### Fixed
 
