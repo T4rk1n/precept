@@ -350,12 +350,14 @@ def test_config_order(tmp_path):
     # Test that reading the config file doesn't change set values
     cfg2 = ConfigTest()
     cfg2.config_str_with_default = 'Changed again'
+    cfg2.config_nested.double_nested.double = 88
     cfg2.save(config_path)
 
     cfg.read_file(config_path)
 
     assert cfg.config_str_with_default == 'Changed again'
     assert cfg.config_str == 'updated'
+    assert cfg.config_nested.double_nested.double == 88
     assert cfg.config_nested.nested_str == 'changed one'
 
     # Test argument take precedence over all
