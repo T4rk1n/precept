@@ -454,6 +454,7 @@ class _NestableDescriptor(ConfigProperty):
         }
         super().__init__(default, comment, config_type=dict)
         self.nestable = nestable
+        self.nested_cls = nested_cls
         self.name = nestable[1:]
 
     def __get__(self, instance, owner):
@@ -498,8 +499,38 @@ class Config(Nestable):
         self._data = merge(self._data, data)
 
     def read_file(self, path: str):
-        # Merge with file as base so set values stays.
-        self._data = merge(self._serializer.load(path), self._data)
+        data = self._serializer.load(path)
+        updated = {}
+
+        def handle_prop(key, value, default, to_update, original):
+            userdata = original.get(key, undefined)
+            if userdata is not undefined and userdata != default:
+                to_update[key] = userdata
+            else:
+                to_update[key] = value
+
+        def handle_dict(root, parent, updatable, orig):
+            for key, value in root.items():
+                if not parent:
+                    prop = getattr(type(self), key)
+                else:
+                    prop = getattr(parent.nested_cls, key)
+
+                if isinstance(value, dict):
+                    updatable[key] = {}
+                    handle_dict(
+                        value, prop, updatable[key], orig.get(key, {})
+                    )
+                else:
+                    if parent:
+                        default = parent.default.get(key)
+                    else:
+                        default = prop.default
+                    handle_prop(key, value, default, updatable, orig)
+
+        handle_dict(data, None, updated, self._data)
+
+        self._data = merge(self._data, updated)
 
     def save(self, path: str):
         self._serializer.dump(self, path)
