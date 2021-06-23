@@ -17,6 +17,8 @@ class AsyncExecutor:
         if executor:  # pragma: no cover
             self.executor = executor
         else:
+            # FIXME Investigate need to call shutdown on executor.
+            # pylint: disable=consider-using-with
             self.executor = ThreadPoolExecutor(max_workers=max_workers)
 
     async def execute(self, func, *args, **kwargs):
