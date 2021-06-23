@@ -45,4 +45,5 @@ class PreceptEvent(AutoNameEnum):
         return hash(self.value)
 
     def __str__(self):
+        # pylint: disable=invalid-str-returned
         return self.value
