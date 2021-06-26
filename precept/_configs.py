@@ -88,8 +88,10 @@ class YamlConfigSerializer(BaseConfigSerializer):
 
         ya_data = _to_yaml(ya_data, configs)
 
+        yml = yaml.YAML()
+
         with open(path, 'w') as f:
-            yaml.dump(ya_data, f, Dumper=yaml.RoundTripDumper)
+            yml.dump(ya_data, f)
 
     def load(self, path):
         with open(path, 'r') as f:
