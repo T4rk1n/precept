@@ -385,3 +385,23 @@ def test_multi_config_instances():
         cfg1.config_nested.double_nested.double
         != cfg2.config_nested.double_nested.double
     )
+
+
+def test_dump_config_str_no_default_no_comment():
+    config_file = './config.toml'
+
+    class Conf(Config):
+        config_str_no_default_or_comment = ConfigProperty(config_type=str)
+
+    class Cli(Precept):
+        config_class = Conf
+
+    cli = Cli(config_file=config_file, add_dump_config_command=True)
+    cli.config.config_format = ConfigFormat.TOML
+
+    try:
+        cli.start(f'dump-configs {config_file}')
+    finally:
+        if os.path.exists(config_file):
+            os.remove(config_file)
+
