@@ -331,7 +331,7 @@ class ConfigProperty:
                     value = self.config_type(value)
             except TypeError as err:
                 raise ConfigError(
-                    f'Expected type {self.config_type.__name__} for {value}'
+                    f'Expected type {repr(self.config_type)} for {value}'
                 ) from err
 
         return value
