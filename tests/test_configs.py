@@ -405,3 +405,24 @@ def test_dump_config_str_no_default_no_comment():
         if os.path.exists(config_file):
             os.remove(config_file)
 
+
+def test_dump_config_str_bool_default_less_40_comment():
+    config_file = './config.toml'
+
+    class Conf(Config):
+        boolean_cfg = ConfigProperty(
+            config_type=bool, default=True, comment='less than 40'
+        )
+
+
+    class Cli(Precept):
+        config_class = Conf
+
+    cli = Cli(config_file=config_file, add_dump_config_command=True)
+    cli.config.config_format = ConfigFormat.TOML
+
+    try:
+        cli.start(f'dump-configs {config_file}')
+    finally:
+        if os.path.exists(config_file):
+            os.remove(config_file)
