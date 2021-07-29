@@ -1,23 +1,21 @@
-import collections
 import abc
+import collections
+import configparser
+import copy
 import itertools
 import json
 import os
-import typing
-import configparser
 import textwrap
-import copy
+import typing
 from enum import auto
 
 import stringcase
 import tomlkit
-
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap
 
 from ._tools import AutoNameEnum
 from .errors import ConfigError
-
 
 undefined = object()
 
@@ -223,7 +221,7 @@ class TomlConfigSerializer(BaseConfigSerializer):
                         if good:
                             section[key].comment(prop.comment)
                 else:
-                    section.add(key, value)
+                    add_value(section, key, value)
 
         with open(path, 'w') as file:
             file.write(tomlkit.dumps(doc))
