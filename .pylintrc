@@ -152,7 +152,8 @@ disable=print-statement,
         no-member,
         not-callable,
         import-outside-toplevel,
-        super-with-arguments
+        super-with-arguments,
+        too-many-nested-blocks
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
