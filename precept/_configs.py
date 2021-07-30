@@ -219,7 +219,10 @@ class TomlConfigSerializer(BaseConfigSerializer):
                     else:
                         good = add_value(section, key, value)
                         if good:
-                            item = section.item(key)
+                            if isinstance(value, bool):
+                                item = section.item(key)
+                            else:
+                                item = section[key]
                             item.comment(prop.comment)
                 else:
                     add_value(section, key, value)
