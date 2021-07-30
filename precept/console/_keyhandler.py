@@ -193,11 +193,11 @@ if __name__ == '__main__':  # pragma: no cover
                 stop()
             print(repr(msg), file=sys.stderr)
 
-        async with KeyHandler({}, default_handler=hand, loop=main_loop) as k:
+        async with KeyHandler({}, default_handler=hand) as k:
             k.print_keys()
             print('Type 10 chars')
             while not k.stop_event.is_set():
                 print('.', end='', flush=True)
-                await asyncio.sleep(1, loop=main_loop)
+                await asyncio.sleep(1)
 
     main_loop.run_until_complete(main())
