@@ -4,6 +4,13 @@ Versions follows [semver](https://semver.org/).
 
 :warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
 
+## [0.6.5]
+### Fixed
+
+- :bug: Fix Toml dump config of type `bool` with a default and a comment with less than 40 characters. #22
+- :bug: Fix Toml dump config of type `str` with no comment and no default. #23
+- :bug: Use repr in case of error instead of `__class__.__name__` which might exist if the given type is wrong.
+
 ## [0.6.4]
 ### Fixed
 
