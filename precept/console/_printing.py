@@ -1,6 +1,6 @@
 import asyncio
-import sys
 import math
+import sys
 
 from colorama import Style, Fore
 
@@ -97,21 +97,19 @@ async def progress_bar(
         include_value=True,
         dents=50,
         sleep_time=0.005,
-        loop=None,
         file=None,
         full_symbol='#',
         empty_symbol='-',
         start_symbol='[',
         end_symbol=']',
 ):
-    loop = loop or asyncio.get_event_loop()
     value = 0
 
     value_formatter = value_formatter or (lambda x, y: f'{x} / {y}')
 
     while value < max_value:
         value = value_func()
-        await asyncio.sleep(sleep_time, loop=loop)
+        await asyncio.sleep(sleep_time)
 
         progress = math.ceil(value / max_value * dents)
         progress_line = (

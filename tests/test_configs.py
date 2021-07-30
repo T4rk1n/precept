@@ -414,7 +414,6 @@ def test_dump_config_str_bool_default_less_40_comment():
             config_type=bool, default=True, comment='less than 40'
         )
 
-
     class Cli(Precept):
         config_class = Conf
 
