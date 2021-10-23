@@ -516,7 +516,9 @@ class Config(Nestable):
         def handle_dict(root, parent, updatable, orig):
             for key, value in root.items():
                 if not parent:
-                    prop = getattr(type(self), key)
+                    prop = getattr(type(self), key, undefined)
+                    if prop is undefined:
+                        continue
                 else:
                     prop = getattr(parent.nested_cls, key)
 
