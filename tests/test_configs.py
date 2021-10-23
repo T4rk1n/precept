@@ -25,11 +25,25 @@ config_files = [
 
 class ConfigTest(Config):
     """root_comment"""
-    config_str = ConfigProperty(comment='comment_string', config_type=str)
-    config_str_with_default = ConfigProperty(default='Default foo bar')
-    config_int = ConfigProperty(default=10)
-    config_float = ConfigProperty(default=89.99, comment='comment_float')
-    config_list = ConfigProperty(default=[1, 2, 3])
+    config_str = ConfigProperty(
+        comment='comment_string',
+        config_type=str,
+        auto_environ=True
+    )
+    config_str_with_default = ConfigProperty(
+        default='Default foo bar',
+        auto_environ=True,
+    )
+    config_int = ConfigProperty(default=10, auto_environ=True)
+    config_float = ConfigProperty(
+        default=89.99,
+        comment='comment_float',
+        auto_environ=True,
+    )
+    config_list = ConfigProperty(
+        default=[1, 2, 3],
+        auto_environ=True,
+    )
     config_auto_global = ConfigProperty(
         default=333, auto_global=True, comment='comment_auto_global'
     )
