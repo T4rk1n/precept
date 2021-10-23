@@ -268,7 +268,7 @@ class ConfigProperty:
             comment=None,
             config_type=None,
             environ_name=None,
-            auto_environ=True,
+            auto_environ=False,
             name=None,
             auto_global=False,
             global_name=None,
