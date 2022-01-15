@@ -2,13 +2,18 @@
 
 Versions follow [semver](https://semver.org/).
 
-:warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize. 
+:warning: Expect breaking changes between minor versions prior to `1.0.0` while the api stabilize.
+
+## [0.6.7]
+### Fixed
+
+- :bug: Fixed Python 10 support.
 
 ## [0.6.6]
 ### Fixed
 
-- Fixed reading toml config file with more keys than defined in the config class.
-- Fixed default config property `auto_environ` to false.
+- :bug: Fixed reading toml config file with more keys than defined in the config class.
+- :bug: Fixed default config property `auto_environ` to false.
 
 ## [0.6.5]
 ### Fixed
