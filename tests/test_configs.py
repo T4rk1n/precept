@@ -451,7 +451,7 @@ hello = "world"
 '''
 
 
-def test_toml_list(tmpdir):
+def test_toml_list():
     class Conf(Config):
         nest_list = ConfigProperty(config_type=list)
 

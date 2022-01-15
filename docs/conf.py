@@ -21,7 +21,7 @@ from precept import __version__ as version
 # -- Project information -----------------------------------------------------
 
 project = 'precept'
-copyright = '2019, Philippe Duval'
+copyright = '2021, Philippe Duval'
 author = 'Philippe Duval'
 
 # The short X.Y version
@@ -34,7 +34,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'm2r',
+    'm2r2',
 ]
 
 templates_path = ['_templates']
