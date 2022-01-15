@@ -13,7 +13,7 @@ class AsyncExecutor:
         :param max_workers: Max workers of the created ThreadPoolExecutor.
         """
         self.loop = loop or asyncio.get_event_loop()
-        self.lock = asyncio.Lock(loop=loop)
+        self.lock = asyncio.Lock()
         if executor:  # pragma: no cover
             self.executor = executor
         else:
