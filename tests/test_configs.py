@@ -439,3 +439,27 @@ def test_dump_config_str_bool_default_less_40_comment():
     finally:
         if os.path.exists(config_file):
             os.remove(config_file)
+
+
+toml_config = '''
+[[nest_list]]
+foo = "foo"
+hello = "hello"
+[[nest_list]]
+foo = "bar"
+hello = "world"
+'''
+
+
+def test_toml_list(tmpdir):
+    class Conf(Config):
+        nest_list = ConfigProperty(config_type=list)
+
+    conf = Conf()
+    config_file = './config.toml'
+    with open(config_file, 'w') as f:
+        f.write(toml_config)
+
+    conf.config_format = ConfigFormat.TOML
+    conf.read_file(config_file)
+    assert conf.nest_list[0]['foo'] == 'foo'
